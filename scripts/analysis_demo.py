@@ -23,8 +23,6 @@ print(f"VaR (direct, historical): {var_hist:.6f}")
 print(f"ES  (direct, historical): {es_hist:.6f}")
 
 # (4) 우리가 만든 함수로 계산 (검증)
-import sys
-sys.path.append("src") #지금 단계에서만 쓰는 임시 방법
 
 from riskmetrics.var import historical_var
 from riskmetrics.es import historical_es
