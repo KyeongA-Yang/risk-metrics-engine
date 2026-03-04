@@ -122,7 +122,7 @@ $$
 Define the violation indicator:
 
 $$
-I_t = \mathbb{1}\{L_t > \mathrm{VaR}_{\alpha,t}\}
+I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}}
 $$
 
 
