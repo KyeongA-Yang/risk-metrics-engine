@@ -117,27 +117,31 @@ So for $\alpha=0.99$, the expected violation rate is about 1%.
 ---
 
 ## 6) Kupiec POF (Proportion of Failures) test (basic)
-Let $n$ be the number of backtest observations and $x=\sum_{t=1}^n I_t$ be the number of violations.  
-Under the null hypothesis $H_0$: violation probability $p = 1-\alpha$.
+
+Let $n$ be the number of backtest observations and let $x=\sum_{t=1}^n I_t$ be the number of violations.  
+Under the null hypothesis $H_0$, the violation probability is $p = 1-\alpha$.
 
 Kupiec’s likelihood ratio statistic compares:
 - $H_0$: $p$ fixed at $1-\alpha$
 - $H_1$: $p$ estimated by $\hat p = x/n$
 
 $$
-\mathrm{LR}_{\text{POF}} = -2\left[\log L(p) - \log L(\hat p)\right],
+\mathrm{LR}_{\text{POF}} = -2\left(\log L(p) - \log L(\hat p)\right)
 $$
-where $L(\cdot)$ is the binomial likelihood.
+
+Here $L(\cdot)$ is the binomial likelihood.
 
 ### Interpretation
-- Large $\mathrm{LR}_{\text{POF}}$ suggests the observed violation rate is inconsistent with the expected $1-\alpha$.
+A large $\mathrm{LR}_{\text{POF}}$ suggests the observed violation rate is inconsistent with the expected rate $1-\alpha$.
 
 ### Practical note
-To report significance, compute a p-value using $\chi^2$ with 1 degree of freedom:
+To report significance, compute a p-value using a $\chi^2$ distribution with 1 degree of freedom:
+
 $$
-p\text{-value} = 1 - F_{\chi^2_1}(\mathrm{LR}_{\text{POF}}).
+\text{p-value} = 1 - F_{\chi^2_1}\!\left(\mathrm{LR}_{\text{POF}}\right)
 $$
-(We can add this to the code later.)
+
+(We can add this p-value computation to the code later.)
 
 ---
 
