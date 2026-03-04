@@ -92,17 +92,4 @@ rv = rolling_historical_var(pnl_series, window=250, alpha=0.99)
 
 
 ## Learning Notes
-
-### 2026-03-04 — Rolling / time series basics
-- `pd.to_datetime()`은 날짜/시간을 파이썬이 **datetime 타입**으로 인식하게 만든다.
-- `sort_values("date")`는 시간 순서가 꼬인 데이터를 **날짜 기준으로 정렬**한다.
-- `set_index("date")`를 하면 날짜가 **인덱스**가 되어 시계열 연산(rolling 등)이 자연스러워진다.
-- `rolling(window=3)`은 “최근 3개 관측치” 기준으로 계산하며, 초반 `window-1` 구간은 값이 없어 `NaN`이 생긴다.
-- rolling 결과는 원래 데이터와 **길이/인덱스가 같게 유지**되는 것이 기본이라 “정렬/정합성(alignment)”이 중요하다.
-
-### 2026-03-04 — dropna / alignment pitfalls
-- `dropna()`는 `NaN`이 있는 행을 제거해서 “계산 가능한 구간만” 남긴다.
-- rolling 결과는 초반에 `NaN`이 생기므로, 필요하면 `dropna()`로 제거할 수 있다.
-- pandas는 Series 연산 시 “행 순서”가 아니라 “인덱스(날짜)”로 **자동 정렬(alignment)** 해서 계산한다.
-- 그래서 `dropna()`로 한쪽 인덱스가 줄면 비교/연산 결과가 예상과 달라질 수 있다.
-- 안전한 방식: `set_index(...).sort_index()` 후 `pd.concat([...], axis=1).dropna()`로 **공통 인덱스만 맞춘 뒤** 비교한다.
+- See `notes/LEARNING_NOTES.md`
