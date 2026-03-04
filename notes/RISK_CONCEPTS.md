@@ -22,8 +22,9 @@ This note defines core risk metrics and backtesting concepts used in this projec
 ### Definition
 For a random variable $X$, the $\alpha$-quantile is:
 $$
-q_\alpha(X) = \inf \{x \in \mathbb{R} : \mathbb{P}(X \le x) \ge \alpha\}.
+q_\alpha(X) = \inf \{x \in \mathbb{R} : \mathbb{P}(X \le x) \ge \alpha\}
 $$
+.
 
 ### Practical note (empirical quantile)
 For finite samples, quantiles depend on the chosen method (interpolation rule).  
@@ -34,20 +35,21 @@ With very small sample sizes, high quantiles (e.g., 0.99) can behave like “alm
 ## 2) Value at Risk (VaR)
 ### Definition (loss-based)
 $$
-\mathrm{VaR}_\alpha = q_\alpha(L).
+\mathrm{VaR}_\alpha = q_\alpha(L)
 $$
 
 ### Interpretation
 $$
-\mathbb{P}(L > \mathrm{VaR}_\alpha) \approx 1-\alpha.
+\mathbb{P}(L > \mathrm{VaR}_\alpha) \approx 1-\alpha
 $$
 Example: If $\alpha=0.99$ and $\mathrm{VaR}_{0.99}=0.03$, then “loss exceeds 3% with probability about 1%”.
 
 ### Historical (nonparametric) VaR estimate
 Given observed losses $\{L_1,\dots,L_n\}$:
 $$
-\widehat{\mathrm{VaR}}_\alpha = q_\alpha(\{L_i\}_{i=1}^n).
+\widehat{\mathrm{VaR}}_\alpha = q_\alpha(\{L_i\}_{i=1}^n)
 $$
+.
 
 ### Pitfalls / notes
 - VaR is a *threshold*, not a tail average; it does not describe severity beyond the cutoff.
@@ -59,8 +61,9 @@ $$
 ## 3) Expected Shortfall (ES) / Conditional VaR (CVaR)
 ### Definition
 $$
-\mathrm{ES}_\alpha = \mathbb{E}[L \mid L \ge \mathrm{VaR}_\alpha].
+\mathrm{ES}_\alpha = \mathbb{E}[L \mid L \ge \mathrm{VaR}_\alpha]
 $$
+.
 
 ### Interpretation
 ES answers: “If we are already in the worst $1-\alpha$ tail, what is the average loss?”
@@ -68,12 +71,14 @@ ES answers: “If we are already in the worst $1-\alpha$ tail, what is the avera
 ### Historical ES estimate (simple)
 Let $\widehat{\mathrm{VaR}}_\alpha$ be the empirical VaR and define the tail set:
 $$
-\mathcal{T} = \{ i : L_i \ge \widehat{\mathrm{VaR}}_\alpha \}.
+\mathcal{T} = \{ i : L_i \ge \widehat{\mathrm{VaR}}_\alpha \}
 $$
+.
 Then
 $$
-\widehat{\mathrm{ES}}_\alpha = \frac{1}{|\mathcal{T}|} \sum_{i\in \mathcal{T}} L_i.
+\widehat{\mathrm{ES}}_\alpha = \frac{1}{|\mathcal{T}|} \sum_{i\in \mathcal{T}} L_i
 $$
+.
 
 ### Pitfalls / notes
 - Tail sample size can be tiny (especially at $\alpha=0.99$), leading to high variance.
@@ -86,7 +91,7 @@ Rolling estimation recomputes the metric at each time $t$ using only the most re
 
 ### Rolling VaR (loss-based)
 $$
-\mathrm{VaR}_{\alpha,t} = q_\alpha\left(L_{t-w+1}, \dots, L_t\right).
+\mathrm{VaR}_{\alpha,t} = q_\alpha\left(L_{t-w+1}, \dots, L_t\right)
 $$
 
 ### Rolling ES
@@ -104,14 +109,16 @@ $$
 ## 5) Backtesting: VaR violations
 Define the violation indicator:
 $$
-I_t = \mathbf{1}\{L_t > \mathrm{VaR}_{\alpha,t}\}.
+I_t = \mathbf{1}\{L_t > \mathrm{VaR}_{\alpha,t}\}
 $$
+.
 
 ### Interpretation
 If the VaR model is well-calibrated, then:
 $$
-\mathbb{E}[I_t] \approx 1-\alpha.
+\mathbb{E}[I_t] \approx 1-\alpha
 $$
+.
 So for $\alpha=0.99$, the expected violation rate is about 1%.
 
 ---
