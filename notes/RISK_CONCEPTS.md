@@ -21,9 +21,12 @@ This note defines core risk metrics and backtesting concepts used in this projec
 ## 1) Quantile (VaR building block)
 ### Definition
 For a random variable $X$, the $\alpha$-quantile is:
+
 $$
 q_\alpha(X) = \inf \{x \in \mathbb{R} : \mathbb{P}(X \le x) \ge \alpha\}
 $$
+
+.
 
 
 ### Practical note (empirical quantile)
@@ -34,21 +37,26 @@ With very small sample sizes, high quantiles (e.g., 0.99) can behave like “alm
 
 ## 2) Value at Risk (VaR)
 ### Definition (loss-based)
+
 $$
 \mathrm{VaR}_\alpha = q_\alpha(L)
 $$
 
 ### Interpretation
+
 $$
 \mathbb{P}(L > \mathrm{VaR}_\alpha) \approx 1-\alpha
 $$
+
 Example: If $\alpha=0.99$ and $\mathrm{VaR}_{0.99}=0.03$, then “loss exceeds 3% with probability about 1%”.
 
 ### Historical (nonparametric) VaR estimate
 Given observed losses $\{L_1,\dots,L_n\}$:
+
 $$
 \widehat{\mathrm{VaR}}_\alpha = q_\alpha(\{L_i\}_{i=1}^n)
 $$
+
 
 
 ### Pitfalls / notes
@@ -60,6 +68,7 @@ $$
 
 ## 3) Expected Shortfall (ES) / Conditional VaR (CVaR)
 ### Definition
+
 $$
 \mathrm{ES}_\alpha = \mathbb{E}[L \mid L \ge \mathrm{VaR}_\alpha]
 $$
@@ -70,11 +79,13 @@ ES answers: “If we are already in the worst $1-\alpha$ tail, what is the avera
 
 ### Historical ES estimate (simple)
 Let $\widehat{\mathrm{VaR}}_\alpha$ be the empirical VaR and define the tail set:
+
 $$
 \mathcal{T} = \{ i : L_i \ge \widehat{\mathrm{VaR}}_\alpha \}
 $$
 
 Then
+
 $$
 \widehat{\mathrm{ES}}_\alpha = \frac{1}{|\mathcal{T}|} \sum_{i\in \mathcal{T}} L_i
 $$
@@ -90,11 +101,13 @@ $$
 Rolling estimation recomputes the metric at each time $t$ using only the most recent window.
 
 ### Rolling VaR (loss-based)
+
 $$
 \mathrm{VaR}_{\alpha,t} = q_\alpha\left(L_{t-w+1}, \dots, L_t\right)
 $$
 
 ### Rolling ES
+
 $$
 \mathrm{ES}_{\alpha,t} = \mathbb{E}\left[L \mid L \ge \mathrm{VaR}_{\alpha,t}\right] \quad \text{estimated within the same window.}
 $$
@@ -108,6 +121,7 @@ $$
 
 ## 5) Backtesting: VaR violations
 Define the violation indicator:
+
 $$
 I_t = \mathbf{1}\{L_t > \mathrm{VaR}_{\alpha,t}\}
 $$
@@ -115,6 +129,7 @@ $$
 
 ### Interpretation
 If the VaR model is well-calibrated, then:
+
 $$
 \mathbb{E}[I_t] \approx 1-\alpha
 $$
