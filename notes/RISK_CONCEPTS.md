@@ -26,7 +26,6 @@ $$
 q_\alpha(X) = \inf \{x \in \mathbb{R} : \mathbb{P}(X \le x) \ge \alpha\}
 $$
 
-.
 
 
 ### Practical note (empirical quantile)
