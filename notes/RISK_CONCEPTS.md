@@ -24,7 +24,7 @@ For a random variable $X$, the $\alpha$-quantile is:
 $$
 q_\alpha(X) = \inf \{x \in \mathbb{R} : \mathbb{P}(X \le x) \ge \alpha\}
 $$
-.
+
 
 ### Practical note (empirical quantile)
 For finite samples, quantiles depend on the chosen method (interpolation rule).  
@@ -49,7 +49,7 @@ Given observed losses $\{L_1,\dots,L_n\}$:
 $$
 \widehat{\mathrm{VaR}}_\alpha = q_\alpha(\{L_i\}_{i=1}^n)
 $$
-.
+
 
 ### Pitfalls / notes
 - VaR is a *threshold*, not a tail average; it does not describe severity beyond the cutoff.
@@ -63,7 +63,7 @@ $$
 $$
 \mathrm{ES}_\alpha = \mathbb{E}[L \mid L \ge \mathrm{VaR}_\alpha]
 $$
-.
+
 
 ### Interpretation
 ES answers: “If we are already in the worst $1-\alpha$ tail, what is the average loss?”
@@ -73,12 +73,12 @@ Let $\widehat{\mathrm{VaR}}_\alpha$ be the empirical VaR and define the tail set
 $$
 \mathcal{T} = \{ i : L_i \ge \widehat{\mathrm{VaR}}_\alpha \}
 $$
-.
+
 Then
 $$
 \widehat{\mathrm{ES}}_\alpha = \frac{1}{|\mathcal{T}|} \sum_{i\in \mathcal{T}} L_i
 $$
-.
+
 
 ### Pitfalls / notes
 - Tail sample size can be tiny (especially at $\alpha=0.99$), leading to high variance.
@@ -111,14 +111,14 @@ Define the violation indicator:
 $$
 I_t = \mathbf{1}\{L_t > \mathrm{VaR}_{\alpha,t}\}
 $$
-.
+
 
 ### Interpretation
 If the VaR model is well-calibrated, then:
 $$
 \mathbb{E}[I_t] \approx 1-\alpha
 $$
-.
+
 So for $\alpha=0.99$, the expected violation rate is about 1%.
 
 ---
