@@ -90,6 +90,7 @@ rv = rolling_historical_var(pnl_series, window=250, alpha=0.99)
 - Plotting: loss series + rolling VaR + violation markers
 - Support date column in CLI output (print dates instead of row indices)
 
-
-## Learning Notes
-- See `notes/LEARNING_NOTES.md`
+## Documentation
+- Engineering log: `notes/ENGINEERING_LOG.md`
+- Experiments log: `notes/EXPERIMENTS_LOG.md`
+- Risk concepts: `notes/RISK_CONCEPTS.md`
