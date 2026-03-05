@@ -1,6 +1,8 @@
 # Engineering Log
 > Template: Context → Implementation → Pitfalls & Best Practices → How to run → Next
 
+---
+
 ## 2026-03-03 — Project setup / tooling basics
 
 ### Context
@@ -70,4 +72,55 @@ pytest -q
 ### Next
 - Add rolling violations + backtest summary (violation rate, Kupiec POF + p-value).
 - Improve CLI to support a date column (print dates instead of row indices).
+
+---
+
+## 2026-03-05 — Backtesting pipeline: violations + Kupiec POF (LR + p-value)
+
+### Context
+- Implemented and validated the first backtesting component for rolling VaR.
+- Goal was a reproducible pipeline: rolling VaR → violations → Kupiec POF test.
+
+### Implementation
+- Added `var_violations(loss: pd.Series, var: pd.Series) -> pd.Series`
+  - Uses `pd.concat(...).dropna()` to align indices safely.
+  - Defines violations as `loss > var`.
+- Added `kupiec_pof_test(violations, alpha) -> dict`
+  - Computes LR statistic under Binomial model and returns p-value via `chi2(df=1)`.
+  - Added numerical stability guard (`eps`) to avoid `log(0)` when `x=0` or `x=n`.
+- Verified end-to-end on `data/sample_pnl.csv` with `alpha=0.99`, `window=3`.
+
+### Pitfalls & Best Practices
+- Rolling/backtesting is order-sensitive → ensure time index sorted before rolling.
+- Avoid early `.to_numpy()` in comparisons → keep pandas index alignment. (What we learned yesterday!)
+- `x=0` 또는 `x=n`이면 `log(0)` 문제가 생겨서 작은 값 eps clipping이 필요함. (e.g., `eps=1e-12`)
+
+### How to run
+```bash
+python - << 'PY'
+import pandas as pd
+from riskmetrics.var import rolling_historical_var
+from riskmetrics.backtest import var_violations, kupiec_pof_test
+
+df = pd.read_csv("data/sample_pnl.csv")
+df["date"] = pd.date_range("2026-01-01", periods=len(df), freq="D")
+df = df.set_index("date").sort_index()
+
+pnl = df["pnl"]
+loss = -pnl
+alpha = 0.99
+window = 3
+
+rvar = rolling_historical_var(pnl, window=window, alpha=alpha)
+viol = var_violations(loss, rvar)
+print(kupiec_pof_test(viol, alpha=alpha))
+PY
+```
+
+### Next
+- Run the backtesting pipeline on a longer series (>= 250 observations) with a realistic window (e.g., 250 trading days).
+- Produce a compact backtest report: (n, x, observed vs expected violation rate, LR_POF, p-value).
+- Add a diagnostic plot: loss vs rolling VaR with violation markers to visually validate alignment and threshold breaches.
+
+---
 

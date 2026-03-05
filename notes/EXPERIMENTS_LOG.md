@@ -76,3 +76,43 @@
 
 ### Summary
 - rolling VaR를 함수/CLI로 구현해 동작을 확인했고, `dropna`/`.to_numpy()`로 인덱스 정합이 깨질 수 있어 `concat(...).dropna()`로 맞추는 게 안전하다는 걸 확인했다.
+
+---
+
+## 2026-03-05 — Rolling VaR violations + Kupiec POF on sample PnL
+
+### Question
+Does the rolling VaR threshold achieve the expected coverage rate (violation probability = 1 - alpha)
+
+### Data
+- `data/sample_pnl.csv` (10 observations)
+- Added a synthetic daily date index for readability
+
+### Setup
+- `alpha = 0.99`
+- `window = 3`
+- `loss = -pnl`
+- `violations = {loss > rolling_VaR}`
+- Kupiec POF LR test with `chi-square(1)` p-value
+
+### Results
+- aligned `n = 8` (after rolling NaNs removed)
+- violations `x = 2`
+- `observed rate = 0.25`
+- `expected rate = 0.01`
+- `p-value ≈ 0.002`
+- `Reject H0`
+
+### Interpretation
+- Reject H0 : The observed violation rate is far above the expected 1% for VaR(0.99).
+- This strongly rejects correct coverage in this toy example.
+- Due to small n and tiny window, results are for pipeline sanity check, not model assessment.
+
+### Next
+- Run on a longer series (>= 250) with realistic window sizes.
+- Add summary reporting and plotting (loss vs rolling VaR, violation markers).
+
+### Summary (Korean, 1 line)
+- 파이프라인이 정상 작동됨을 확인하였고, 샘플 데이터(window=3)에서 위반률이 기대치(1%)보다 훨씬 커서 Kupiec POF에서 기각되는 결과도 함께 확인하였다.
+
+
