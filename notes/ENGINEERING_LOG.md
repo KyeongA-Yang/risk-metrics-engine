@@ -124,3 +124,74 @@ PY
 
 ---
 
+## 2026-03-06 — Long-series backtesting: rolling VaR + Kupiec POF + diagnostics
+
+### Context
+- Extend the rolling VaR backtesting pipeline from a toy example to a long series (>= 250 obs).
+- Goal: validate coverage using Kupiec POF and add diagnostics (compact report + plot).
+
+### Implementation
+- Generated a long synthetic daily PnL series with 1000 observations:
+  - PnL ~ N(0, 0.01^2)
+  - Saved to `data/long_pnl.csv`
+- Ran the full pipeline on a realistic rolling window:
+  - `loss = -pnl`
+  - `rolling_historical_var(pnl, window=250, alpha=0.99)`
+  - `violations = var_violations(loss, rvar)` (index-aligned via `concat(...).dropna()`)
+  - `kupiec_pof_test(violations, alpha=0.99)` → LR + p-value
+- Added a compact helper: `backtest_report(loss, var, alpha)` returning:
+  - n, x, expected_rate, observed_rate, lr_pof, p_value
+- Created a diagnostic plot script:
+  - `scripts/plot_backtest.py` plots loss vs rolling VaR with violation markers.
+
+### Pitfalls & Best Practices
+- Rolling reduces usable sample size: effective n = N - (window - 1).
+  - With `alpha=0.99`, `window=250`, synthetic long series produced: n = 751, x = 9
+- Keep pandas indices for correct alignment; use `concat(...).dropna()` before comparisons.
+- Notebook import errors can occur if the kernel holds an old module version:
+  - fix by restarting kernel / re-running imports.
+- window가 250이니까 `n =1000 - 250 + 1 = 751` 확인함.
+
+### How to run
+```bash
+# generate long series
+python - << 'PY'
+import numpy as np, pandas as pd
+rng = np.random.default_rng(0)
+n = 1000
+pnl = rng.normal(0.0, 0.01, n)
+pd.DataFrame({"pnl": pnl}).to_csv("data/long_pnl.csv", index=False)
+print("Wrote data/long_pnl.csv with n =", n)
+PY
+
+# run backtest quickly
+python - << 'PY'
+import pandas as pd
+from riskmetrics.var import rolling_historical_var
+from riskmetrics.backtest import var_violations, kupiec_pof_test
+
+alpha, window = 0.99, 250
+df = pd.read_csv("data/long_pnl.csv")
+df["date"] = pd.date_range("2023-01-01", periods=len(df), freq="D")
+df = df.set_index("date").sort_index()
+
+pnl = df["pnl"]
+loss = -pnl
+rvar = rolling_historical_var(pnl, window=window, alpha=alpha)
+viol = var_violations(loss, rvar)
+print(kupiec_pof_test(viol, alpha=alpha))
+PY
+
+# plot diagnostics
+python scripts/plot_backtest.py
+```
+
+### Next
+- Replace synthetic PnL with ar real price/return series (>=250 obs), then rerun report + diagnostics.
+- Improve plotting for reporting: zoom recent window, save figure, and embed in notebook/README.
+- Prepare the groundwork for returns/volatility featrues and historical VaR/ES functions.
+
+---
+
+
+

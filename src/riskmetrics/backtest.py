@@ -68,3 +68,24 @@ def kupiec_pof_test(violations: pd.Series, alpha: float) -> dict:
         "p_value": p_value
     }
 
+
+def backtest_report(loss: pd.Series, var: pd.Series, alpha: float) -> dict:
+    """
+    Compact backtest report for VaR coverage:
+    - align loss and var
+    - violations
+    - Kupiec POF test (LR + p-value)
+    """
+    viol = var_violations(loss, var)
+    out = kupiec_pof_test(viol, alpha=alpha)
+
+    # 더 보기 좋게 요약
+    return {
+        "n": out["n"],
+        "x": out["x"],
+        "expected_rate": out["expected_rate"],
+        "observed_rate": out["observed_rate"],
+        "lr_pof": out["lr_pof"],
+        "p_value": out["p_value"],
+    }
+

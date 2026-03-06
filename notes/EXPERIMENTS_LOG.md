@@ -82,7 +82,7 @@
 ## 2026-03-05 — Rolling VaR violations + Kupiec POF on sample PnL
 
 ### Question
-Does the rolling VaR threshold achieve the expected coverage rate (violation probability = 1 - alpha)
+Does the rolling VaR threshold achieve the expected coverage rate (violation probability = 1 - alpha)?
 
 ### Data
 - `data/sample_pnl.csv` (10 observations)
@@ -115,4 +115,46 @@ Does the rolling VaR threshold achieve the expected coverage rate (violation pro
 ### Summary (Korean, 1 line)
 - 파이프라인이 정상 작동됨을 확인하였고, 샘플 데이터(window=3)에서 위반률이 기대치(1%)보다 훨씬 커서 Kupiec POF에서 기각되는 결과도 함께 확인하였다.
 
+---
 
+## 2026-03-06 — Long-series rolling VaR backtest (Kupiec POF + diagnostics)
+
+### Question
+Does rolling historical VaR achieve correct coverage on a long series (violation probability ≈ 1 - alpha)?
+
+### Data
+- Synthetic daily PnL series of length N=1000
+- Generated from Normal(0, 0.01^2) and saved as `data/long_pnl.csv`
+- Added a synthetic daily date index for alignment and plotting
+
+### Setup
+- `alpha = 0.99` (expected violation rate = 0.01)
+- `rolling window = 250`
+- `loss = -pnl`
+- rolling VaR computed via empirical quantile on loss
+- violations defined as `loss > rolling_VaR`
+- Kupiec POF LR test with `chi-square(1)` p-value
+
+### Results
+- Effective `n = 751` (after removing rolling NaNs)
+- Violations `x = 9`
+- `Observed rate = 0.011984`
+- `Expected rate = 0.01`
+- `LR_POF = 0.2808`
+- `p_value = 0.5962`
+
+### Interpretation
+- We fail to reject correct coverage at common significance levels (e.g., 5%).
+- Observed violation rate is close to the expected 1% for VaR(0.99).
+- This run is primarily a sanity check of the end-to-end pipeline on a long series.
+- Diagnostics
+  - Visual check: plotted loss vs rolling VaR with violation markers.
+  - Confirmed violations occur only when loss exceeds the VaR threshold.
+
+### Next
+- Run the same pipeline on a real return series and compare results across windows/alpha values.
+- Save and embed plots for reporting.
+- Add volatility features (rolling vol) to analyze how risk changes over regimes.
+
+### Summary
+- 긴 시계열(N=1000)에서 rolling VaR 백테스트를 수행했고, 위반률이 기대치(1%)와 크게 다르지 않아 Kupiec POF에서 기각되지 않으며 파이프라인이 정상 동작함을 확인했다.
