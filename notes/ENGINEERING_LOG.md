@@ -27,6 +27,7 @@
 
 ### How to run
 ```bash
+cd ~/projects/risk-metrics-engine
 source .venv/bin/activate
 pip install -e .
 pytest -q

@@ -112,7 +112,7 @@ Does the rolling VaR threshold achieve the expected coverage rate (violation pro
 - Run on a longer series (>= 250) with realistic window sizes.
 - Add summary reporting and plotting (loss vs rolling VaR, violation markers).
 
-### Summary (Korean, 1 line)
+### Summary
 - 파이프라인이 정상 작동됨을 확인하였고, 샘플 데이터(window=3)에서 위반률이 기대치(1%)보다 훨씬 커서 Kupiec POF에서 기각되는 결과도 함께 확인하였다.
 
 ---
