@@ -194,5 +194,68 @@ python scripts/plot_backtest.py
 
 ---
 
+## 2026-03-09 — Real-data backtesting: SPY (price → returns) + Kupiec POF + report-ready plot
+
+### Context
+- Replace synthetic PnL with a real market series (>=250 obs) and rerun the backtesting pipeline.
+- Goal: produce a compact backtest report and a report-ready diagnostic plot.
+- Also reduce code duplication by generalizing the plotting script.
+
+### Implementation
+- Downloaded SPY daily prices (5y, auto-adjusted) using `yfinance` and saved a clean CSV:
+  - `data/price_SPY.csv` with columns: `date`, `price`
+- Converted price to log returns and loss:
+  - `pnl_t = log(price_t) - log(price_{t-1})`
+  - `loss_t = -pnl_t`
+- Reran rolling historical VaR backtest:
+  - `alpha = 0.99`, `window = 250`
+  - `rolling_historical_var(pnl, window, alpha)`
+  - `backtest_report(loss, VaR, alpha)` → compact dict: (n, x, expected/observed rate, LR_POF, p-value)
+- Improved diagnostics for reporting:
+  - Plot only positive losses: `loss_pos = clip(loss, lower=0)`
+  - Zoom recent window (e.g., last 300 points)
+  - Save figure to PNG: `data/spy_backtest_plot_loss_only.png`
+- Refactored plotting into a single generalized script (`scripts/plot_backtest.py`) with CLI args:
+  - `--mode pnl` (synthetic pnl CSV) vs `--mode price` (date+price CSV)
+  - `--zoom-last`, `--loss-only`, `--out` for report-ready output
+- 실제 S&P500을 이용하여 backtest를 실행해보았고, loss(0 이상인 값만 나오도록)의 꼬리 부분만 확대하여 좀 더 보기 편한 plot으로 그려보았다.
+
+### Pitfalls & Best Practices
+- Results: 
+  - Observed rate ≈ 0.01889 vs expected rate = 0.01
+  - Kupiec POF p-value ≈ 0.01165 → reject correct coverage at 5% (more violations than expected)
+- Real market returns exhibit heavy tails and volatility clustering; simple historical VaR can under-cover at high confidence levels (e.g., 99%).
+- Keep index alignment explicit using `pd.concat([...], axis=1).dropna()` before comparisons.
+- Prefer report-ready plots (zoom + save) for GitHub/portfolio reproducibility.
+- 금융 실데이터는 꼬리가 두껍고, 변동성이 존재하여서 단순 historical window가 99% tail을 잘 못 맞추는 경우가 흔함.
+
+### How to run
+```bash
+# (1) Download SPY prices (once)
+python - << 'PY'
+import yfinance as yf, pandas as pd
+ticker = "SPY"
+df = yf.download(ticker, period="5y", interval="1d", auto_adjust=True, progress=False)
+if isinstance(df.columns, pd.MultiIndex):
+    df.columns = df.columns.get_level_values(0)
+df = df.reset_index()
+out = df[["Date", "Close"]].rename(columns={"Date":"date","Close":"price"})
+out.to_csv("data/price_SPY.csv", index=False)
+print("Saved data/price_SPY.csv rows:", len(out))
+PY
+
+# (2) Run generalized diagnostic plot (SPY)
+python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.99 --window 250 --zoom-last 300 --loss-only --out data/plot_spy_loss_only.png
+```
+
+### Next
+- Add a small coverage grid runner (alpha × window) and print a compact table of results.
+  - Example: alpha = 0.975, 0.99; window = 125, 250, 500
+- Upgrade to an out-of-sample backtest:
+  - compute VaR from data up to t-1 (1-step shift) before comparing to L_t
+- Prepare utilities for price → returns → volatility features,
+  then add historical VaR/ES functions based on returns Series.
+
+---
 
 

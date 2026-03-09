@@ -82,7 +82,7 @@
 ## 2026-03-05 — Rolling VaR violations + Kupiec POF on sample PnL
 
 ### Question
-Does the rolling VaR threshold achieve the expected coverage rate (violation probability = 1 - alpha)?
+Does the rolling VaR threshold achieve the expected coverage rate (violation probability = $1 - \alpha$)?
 
 ### Data
 - `data/sample_pnl.csv` (10 observations)
@@ -158,3 +158,53 @@ Does rolling historical VaR achieve correct coverage on a long series (violation
 
 ### Summary
 - 긴 시계열(N=1000)에서 rolling VaR 백테스트를 수행했고, 위반률이 기대치(1%)와 크게 다르지 않아 Kupiec POF에서 기각되지 않으며 파이프라인이 정상 동작함을 확인했다.
+
+---
+
+## 2026-03-09 — SPY long-series backtest (rolling historical VaR, Kupiec POF, diagnostics)
+
+### Question
+Does rolling historical VaR achieve correct coverage (violation probability ≈ $1 - \alpha$) on real market data (SPY)?
+
+### Data
+- SPY daily adjusted price series (5y) downloaded via `yfinance`
+- Converted to daily log returns:
+  - `pnl_t = log(price_t) - log(price_{t-1})`
+  - `loss_t = -pnl_t`
+- Length: 1256 prices → 1255 returns
+
+### Setup
+- `alpha = 0.99` (expected violation rate = 0.01)
+- `rolling window = 250`
+- Rolling historical VaR via empirical quantile within window
+- Violations: `I_t = 1{ loss_t > VaR_{alpha,t} }`
+- Kupiec POF LR test with `chi-square(1)` p-value
+- Diagnostic plot: loss vs rolling VaR with violation markers (zoom last 300), plus a “loss-only” version for readability
+
+### Results
+- Effective `n = 1006`
+- Violations `x = 19`
+- `Observed rate = 0.0188867`
+- `Expected rate = 0.01`
+- `LR_POF = 6.3636`
+- `p_value = 0.01165`
+
+### Interpretation
+- Reject correct coverage at 5% significance: the observed violation rate is higher than expected.
+- Suggests under-coverage for 99% historical VaR on SPY in this period.
+- This is consistent with real-market behavior (heavy tails / volatility clustering) where simple historical VaR can be challenged.
+- Diagnostics
+  - Report-ready plot (loss-only) improves readability and confirms that violations occur exactly when loss exceeds the rolling VaR threshold.
+  - Saving plots as PNG supports reproducible reporting on GitHub.
+
+### Next
+- Compare coverage across (alpha, window) settings and summarize how results change.
+- Evaluate the impact of out-of-sample shift (t-1 estimation) on violation rate and Kupiec POF.
+- Extend beyond coverage:
+  - rolling ES
+  - independence / clustering diagnostics (e.g., Christoffersen-style ideas)
+
+### Summary
+- SPY 실데이터(5년)에서 rolling historical VaR(99%, window=250)의 위반률이 기대(1%)보다 높아 Kupiec POF에서 기각(p≈0.0116)되었고, plot을 통해 위반이 임계값 초과 구간에서 발생함을 시각적으로 확인했다.
+
+---
