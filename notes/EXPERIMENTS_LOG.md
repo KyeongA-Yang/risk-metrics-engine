@@ -208,3 +208,53 @@ Does rolling historical VaR achieve correct coverage (violation probability ≈ 
 - SPY 실데이터(5년)에서 rolling historical VaR(99%, window=250)의 위반률이 기대(1%)보다 높아 Kupiec POF에서 기각(p≈0.0116)되었고, plot을 통해 위반이 임계값 초과 구간에서 발생함을 시각적으로 확인했다.
 
 ---
+
+## 2026-03-10 — Extreme-loss classifier baseline (SPY): threshold sweep + probability diagnostics
+
+### Question
+Can a simple baseline (logistic regression) predict next-day extreme loss events from basic return/volatility/VaR features?
+
+### Data
+- SPY daily prices (5y) already saved as `data/price_SPY.csv`
+- Converted to log returns and loss:
+  - $$ r_t = \log(P_t) - \log(P_{t-1}) $$
+  - $$ L_t = -r_t $$
+
+### Setup
+- Features: `ret`, `vol20`, `var250`
+- Label:
+  - `loss_t1 = L_{t+1}`
+  - Train-only threshold: $$ \text{thr} = q_{\text{label\_q}}(L_{t+1}) $$
+  - $$ y_t = 1\{ L_{t+1} > \text{thr} \} $$
+- Split: time-based 80/20 (no shuffle)
+- Model: `StandardScaler + LogisticRegression`
+- Evaluation:
+  - proba summary + quantiles
+  - mean proba by class
+  - ROC-AUC
+  - threshold sweep for precision/recall trade-off
+
+### Results
+- With `label_q=0.95`, test positives were extremely small (often 0–2), making metrics unstable.
+- With `label_q=0.90`, test positives increased (e.g., 8/201), but:
+  - predicted probabilities had a narrow range
+  - `mean proba(y=1)` was not higher than `mean proba(y=0)` in this run
+  - threshold sweep showed extreme behavior: either almost no positives predicted or almost all predicted as positives depending on threshold
+
+### Interpretation
+- The baseline does not separate rare events well with the current feature set.
+- Probability diagnostics explain why thresholding can fail:
+  - narrow proba distribution → small threshold changes cause large behavior changes
+  - if `proba(y=1)` is not higher than `proba(y=0)`, ROC-AUC can fall below 0.5
+
+### Next
+- Add lagged returns (recent-day patterns) and compare:
+  - proba separation, ROC-AUC, and threshold sweep behavior
+- Consider alert-budget evaluation (e.g., top-K highest proba days) instead of fixed thresholds.
+
+### Summary
+- SPY 실데이터 기반으로 내일의 큰 손실 분류 baseline을 만들고, threshold sweep과 확률 진단을 통해 Feature 신호가 약하면 모델이 분리되지 않는 현상을 확인했다.
+- 현재 baseline 모델에서는 test 구간에서 위험일을 정상일보다 높은 점수로 랭킹하지 못했고, 모델의 분리력이 부족했음.
+
+---
+

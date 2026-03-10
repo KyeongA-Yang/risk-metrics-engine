@@ -258,4 +258,50 @@ python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.
 
 ---
 
+## 2026-03-10 — ML baseline (time-series, leakage-safe): extreme-loss classifier + diagnostics
+
+### Context
+- Start ML track (Tue/Thu) while keeping the Risk Metrics Engine repo as the main portfolio project.
+- Build a minimal, leakage-safe baseline to predict next-day “extreme loss” events from SPY returns.
+
+### Implementation
+- Data pipeline (real market series):
+  - Loaded `data/price_SPY.csv` (SPY daily prices) and computed log returns and losses:
+    - $$ r_t = \log(P_t) - \log(P_{t-1}) $$
+    - $$ L_t = -r_t $$
+  - Built features:
+    - `ret_t`, `vol20_t = rolling std(ret, 20)`, `var250_t = rolling quantile(ret, 0.01, 250)`
+  - Built label using next-day loss:
+    - `loss_t1 = shift(loss, -1)` so `loss_t1(t) = loss(t+1)`
+    - Train-only threshold to avoid leakage:
+      - $$ \text{thr} = q_{\text{label\_q}}(L_{t+1}) \ \text{computed on train only} $$
+      - $$ y_t = 1\{ L_{t+1} > \text{thr} \} $$
+- Modeling:
+  - Time-based split 80/20 (no shuffle)
+  - Baseline classifier: `StandardScaler + LogisticRegression` in a pipeline
+  - Added diagnostics and threshold sweep:
+    - proba distribution summary / quantiles
+    - mean proba by class
+    - ROC-AUC (only if both classes exist in test)
+    - threshold sweep table: TP/FP/FN/TN, precision/recall
+
+### Pitfalls & Best Practices
+- Use train-only preprocessing parameters:
+  - `StandardScaler` learns $$\mu,\sigma$$ on train; applies same $$\mu,\sigma$$ to test (prevents leakage).
+- Rare-event labels can lead to unstable evaluation when test positives are very small.
+- Avoid relying on accuracy; inspect precision/recall and probability diagnostics.
+- If proba distribution is narrow and `mean proba(y=1) ≤ mean proba(y=0)`, the baseline is not separating the event.
+
+### How to run
+```bash
+python scripts/ml_extreme_loss_baseline.py
+```
+
+### Next
+- Add lagged return features (e.g., ret_lag1…ret_lag5) and re-run diagnostics.
+- Consider alert-budget evaluation for practical risk alerting.
+- Compare logistic baseline vs a simple non-linear model (e.g., RandomForest) once features are ready.
+
+  ---
+
 
