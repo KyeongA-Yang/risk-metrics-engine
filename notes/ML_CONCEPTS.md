@@ -11,8 +11,8 @@ This note defines core ML concepts used for time-series classification in this r
 
 ## 0) Notation
 - Price: $P_t$
-- Log return: $ r_t = \log(P_t) - \log(P_{t-1}) $
-- Loss: $ L_t = -r_t $
+- Log return: $$ r_t = \log(P_t) - \log(P_{t-1}) $$
+- Loss: $$ L_t = -r_t $$
 - Feature vector at time $t$: $X_t$
 - Binary label at time $t$: $y_t \in \{0,1\}$
 - Train/test split index: $T_{\text{split}}$
@@ -43,11 +43,12 @@ A common implementation is to create next-day loss via shifting:
 ### Leakage-free thresholding
 The extreme-loss cutoff must be computed using the training period only:
 
+
 $$ \text{thr} = q_{\text{label\_q}}\left(\{L_{t+1}: t \in \text{train}\}\right) $$
 
 
 Then label both train and test using the same $\text{thr}$:
-$ y_t = \mathbf{1}_{\{L_{t+1} > \text{thr}\}} $
+$$ y_t = \mathbf{1}_{\{L_{t+1} > \text{thr}\}} $$
 
 ### Pitfall
 Computing $\text{thr}$ using all data (train+test) leaks future distribution information into training and makes evaluation overly optimistic.
@@ -68,12 +69,14 @@ Random shuffling breaks time ordering and can leak future patterns into training
 ## 4) StandardScaler and pipelines
 ### Standardization (feature scaling)
 StandardScaler computes mean and standard deviation on training features:
-- Mean: $ \mu_j = \mathbb{E}[X_{t,j}] \ \text{(train only)} $
-- Std: $ \sigma_j = \sqrt{\mathbb{V}[X_{t,j}]} \ \text{(train only)} $
+- Mean: $$ \mu_j = \mathbb{E}[X_{t,j}] \ \text{(train only)} $$
+- Std: $$ \sigma_j = \sqrt{\mathbb{V}[X_{t,j}]} \ \text{(train only)} $$
 
 Transforms each feature:
 
+
 $$ z_{t,j} = \frac{x_{t,j} - \mu_j}{\sigma_j} $$
+
 
 
 ### Why it matters (Logistic Regression)
@@ -115,7 +118,7 @@ $$ \text{FPR}(t) = \frac{FP(t)}{FP(t)+TN(t)} $$
 
 ### ROC-AUC interpretation
 ROC-AUC measures ranking quality of the score $\hat p_t$:
-$ \text{AUC} \approx \mathbb{P}(s(X^+) > s(X^-)) $
+$$ \text{AUC} \approx \mathbb{P}(s(X^+) > s(X^-)) $$
 
 ### Pitfall
 If test contains only one class, ROC-AUC is not defined.
