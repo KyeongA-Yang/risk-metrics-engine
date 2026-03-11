@@ -224,7 +224,7 @@ Can a simple baseline (logistic regression) predict next-day extreme loss events
 - Features: `ret`, `vol20`, `var250`
 - Label:
   - `loss_t1 = L_{t+1}`
-  - Train-only threshold: $\text{thr} = q_{\text{label\_q}}(L_{t+1})$
+  - Train-only threshold: $\mathrm{thr} = q_{\mathrm{label\_q}}(L_{t+1})$
   - $y_t = 1\{ L_{t+1} > \text{thr} \}$
 - Split: time-based 80/20 (no shuffle)
 - Model: `StandardScaler + LogisticRegression`
@@ -274,7 +274,7 @@ How does coverage change across $(\alpha, \text{window})$ settings for rolling h
   - $\alpha \in \{0.975, 0.99\}$
   - window $\in \{125, 250, 500\}$
 - Rolling historical VaR computed from pnl/returns within each window.
-- Violations: $I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}}$
+- Violations: $I_{t} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}}$
 - Summary per setting via `backtest_report`:
   - $n$ (valid days), $x$ (violations), expected rate $(1-\alpha)$, observed rate $(x/n)$
   - Kupiec POF LR statistic and p-value
