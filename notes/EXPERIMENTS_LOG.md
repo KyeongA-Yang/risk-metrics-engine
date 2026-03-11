@@ -258,3 +258,49 @@ Can a simple baseline (logistic regression) predict next-day extreme loss events
 
 ---
 
+## 2026-03-11 — Coverage grid on SPY: alpha × window (rolling historical VaR)
+
+### Question
+How does coverage change across $(\alpha, \text{window})$ settings for rolling historical VaR on SPY?
+
+### Data
+- SPY daily prices (5y) from `data/price_SPY.csv`
+- Returns and losses:
+  - $r_t = \log(P_t) - \log(P_{t-1})$
+  - $L_t = -r_t$
+
+### Setup
+- Grid:
+  - $\alpha \in \{0.975, 0.99\}$
+  - window $\in \{125, 250, 500\}$
+- Rolling historical VaR computed from pnl/returns within each window.
+- Violations: $I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}}$
+- Summary per setting via `backtest_report`:
+  - $n$ (valid days), $x$ (violations), expected rate $(1-\alpha)$, observed rate $(x/n)$
+  - Kupiec POF LR statistic and p-value
+
+### Results (from coverage grid)
+- $\alpha=0.975$:
+  - window 125: observed rate ≈ 0.0407 > 0.025, p ≈ 0.0019 (reject)
+  - window 250: observed rate ≈ 0.0328 > 0.025, p ≈ 0.13 (no reject)
+  - window 500: observed rate ≈ 0.0251 ≈ 0.025, p ≈ 0.98 (matches well, no reject)
+- $\alpha=0.99$:
+  - window 125: observed rate ≈ 0.0212 > 0.01, p ≈ 0.0010 (reject)
+  - window 250: observed rate ≈ 0.0189 > 0.01, p ≈ 0.0116 (reject)
+  - window 500: observed rate ≈ 0.00794 < 0.01, p ≈ 0.55 (no reject)
+
+### Interpretation
+- Short windows (125, 250) tend to under-cover, especially at $\alpha=0.99$ (too many violations).
+- A longer window (500) stabilizes quantile estimation and yields coverage closer to the expected rate.
+- This illustrates the bias–variance trade-off in rolling historical quantile estimation.
+
+### Next
+- Add a 1-step out-of-sample shift: compare $L_t$ to $\mathrm{VaR}_{\alpha,t-1}$ to avoid look-ahead.
+- Extend beyond coverage: rolling ES and independence/clustering diagnostics.
+
+### Summary
+- SPY 실데이터에서 rolling historical VaR의 coverage를 $(\alpha, window)$ grid로 비교했고, 짧은 window에서 특히 99% VaR가 under-coverage(위반 과다)로 Kupiec POF에서 기각되는 패턴을 확인했다.
+
+---
+
+

@@ -304,4 +304,41 @@ python scripts/ml_extreme_loss_baseline.py
 
   ---
 
+## 2026-03-11 — Coverage grid runner (SPY): rolling VaR backtest table
+
+### Context
+- Extend the risk backtesting workflow beyond a single setting by running a small grid over $(\alpha, \text{window})$.
+- Goal: produce a compact, reproducible table that summarizes coverage and Kupiec POF results on real data (SPY).
+
+### Implementation
+- Prepared a real-data loss series from SPY prices:
+  - $r_t = \log(P_t) - \log(P_{t-1})$
+  - $L_t = -r_t$
+- Implemented a coverage grid runner (script + notebook workflow):
+  - Grid: `alpha ∈ {0.975, 0.99}`, `window ∈ {125, 250, 500}`
+  - For each pair:
+    - compute `rolling_historical_var(pnl, window, alpha)`
+    - run `backtest_report(loss, VaR, alpha)` to get a compact dict:
+      - `(n, x, expected_rate, observed_rate, LR_POF, p_value)`
+- Saved results for reporting:
+  - Printed a DataFrame table in notebook/terminal
+  - Exported `data/coverage_grid_spy.csv`
+
+### Pitfalls & Best Practices
+- Use explicit loss convention: `loss = -pnl` and compare `loss > VaR`.
+- Ensure time ordering: sort by date and keep index alignment (avoid early `.to_numpy()`).
+- Reporting-friendly output: a single table makes comparisons across settings easy.
+- 짧은 window에서는 tail(극단 구간) 추정이 불안정해서 위반률이 커질 수 있음.
+
+### How to run
+```bash
+python scripts/run_coverage_grid.py
+```
+
+### Next
+- Upgrade to an out-of-sample backtest using a 1-step shift:
+  - compare $L_t$ to $\mathrm{VaR}_{\alpha,t-1}$ (estimated from past only)
+-Add a compact plot/report template to summarize coverage across the grid.
+
+---
 
