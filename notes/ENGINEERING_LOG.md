@@ -275,7 +275,7 @@ python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.
     - `loss_t1 = shift(loss, -1)` so `loss_t1(t) = loss(t+1)`
     - Train-only threshold to avoid leakage:
       - $\mathrm{thr} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}\}\right)$
-      - $y_t = \mathbf{1}_{\{L_{t+1} > \text{thr}\}}$
+      - $y_t = \mathbf{1}_{L_{t+1} > \text{thr}}$
 
 - Modeling:
   - Time-based split 80/20 (no shuffle)
