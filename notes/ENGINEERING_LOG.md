@@ -280,8 +280,8 @@ python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.
 
      - Label:
 
-    $$ y_t = \mathbf{1}_{\{L_{t+1} > \mathrm{thr}\}} $$
-    
+    $$ y_t = \mathbf{1}_{\{L_{t+1} > \text{thr}\}} $$
+
 - Modeling:
   - Time-based split 80/20 (no shuffle)
   - Baseline classifier: `StandardScaler + LogisticRegression` in a pipeline
