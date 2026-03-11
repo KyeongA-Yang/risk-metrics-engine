@@ -274,7 +274,7 @@ python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.
   - Built label using next-day loss:
     - `loss_t1 = shift(loss, -1)` so `loss_t1(t) = loss(t+1)`
     - Train-only threshold to avoid leakage:
-      - $\text{thr} = q_{\text{label\_q}}(L_{t+1}) \ \text{computed on train only}$
+      - $\mathrm{thr} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}\}\right)$
       - $y_t = \mathbf{1}_{\{L_{t+1} > \text{thr}\}}$
 
 - Modeling:
