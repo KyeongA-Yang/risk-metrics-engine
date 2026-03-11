@@ -276,7 +276,7 @@ How does coverage change across $(\alpha, \text{window})$ settings for rolling h
 - Rolling historical VaR computed from pnl/returns within each window.
 - Violations:
 
-  $$ I_{t} = \mathbf{1}_{\{L_{t} > \mathrm{VaR}_{\alpha,t}\}} $$
+$$ I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}} $$
   
 - Summary per setting via `backtest_report`:
   - $n$ (valid days), $x$ (violations), expected rate $(1-\alpha)$, observed rate $(x/n)$
