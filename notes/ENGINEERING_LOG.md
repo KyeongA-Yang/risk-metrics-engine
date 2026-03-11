@@ -273,10 +273,15 @@ python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.
     - `ret_t`, `vol20_t = rolling std(ret, 20)`, `var250_t = rolling quantile(ret, 0.01, 250)`
   - Built label using next-day loss:
     - `loss_t1 = shift(loss, -1)` so `loss_t1(t) = loss(t+1)`
-    - Train-only threshold to avoid leakage:
-      - $\mathrm{thr} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}\}\right)$
-      - $y_t = \mathbf{1}_{\{L_{t+1} > \mathrm{thr}\}}$
+  - Train-only threshold to avoid leakage:
+    - Threshold:
 
+    $$ \mathrm{thr} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}\}\right) $$
+
+     - Label:
+
+    $$ y_t = \mathbf{1}_{\{L_{t+1} > \mathrm{thr}\}} $$
+    
 - Modeling:
   - Time-based split 80/20 (no shuffle)
   - Baseline classifier: `StandardScaler + LogisticRegression` in a pipeline
