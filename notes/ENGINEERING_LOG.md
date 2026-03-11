@@ -267,20 +267,23 @@ python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.
 ### Implementation
 - Data pipeline (real market series):
   - Loaded `data/price_SPY.csv` (SPY daily prices) and computed log returns and losses:
-    - $r_{t} = \log(P_{t}) - \log(P_{t-1})$
-    - $L_{t} = -r_{t}$
+    - $r_t = \log(P_t) - \log(P_{t-1})$
+    - $L_t = -r_t$
   - Built features:
-    - `ret_t`, `vol20_t = rolling std(ret, 20)`, `var250_t = rolling quantile(ret, 0.01, 250)`
+    - `ret_t`
+    - `vol20_t = rolling std(ret, 20)`
+    - `var250_t = rolling quantile(ret, 0.01, 250)`
   - Built label using next-day loss:
     - `loss_t1 = shift(loss, -1)` so `loss_t1(t) = loss(t+1)`
-  - Train-only threshold to avoid leakage:
-    - Threshold:
+
+- Train-only threshold to avoid leakage:
+  - Threshold:
 
     $$ \mathrm{thr} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}\}\right) $$
 
-     - Label:
+  - Label:
 
-    $$ y_t = \mathbf{1}_{\{L_{t+1} > \text{thr}\}} $$
+    $$ y_t = \mathbf{1}_{\{L_{t+1} > \mathrm{thr}\}} $$
 
 - Modeling:
   - Time-based split 80/20 (no shuffle)
