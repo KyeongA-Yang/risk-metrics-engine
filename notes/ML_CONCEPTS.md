@@ -2,6 +2,8 @@
 > Definitions, formulas, intuition, and pitfalls for ML tasks.
 
 This note defines core ML concepts used for time-series classification in this repo.
+
+
 **Convention used throughout:**
 - We build features using information available at time $t$
 - We predict an outcome at time $t+1$ (next-day event)
@@ -11,8 +13,8 @@ This note defines core ML concepts used for time-series classification in this r
 
 ## 0) Notation
 - Price: $P_t$
-- Log return: $ r_t = \log(P_{t}) - \log(P_{t-1}) $
-- Loss: $ L_{t} = -r_{t} $
+- Log return: $r_{t} = \log(P_{t}) - \log(P_{t-1})$
+- Loss: $L_{t} = -r_{t}$
 - Feature vector at time $t$: $X_t$
 - Binary label at time $t$: $y_t \in \{0,1\}$
 - Train/test split index: $T_{\text{split}}$
