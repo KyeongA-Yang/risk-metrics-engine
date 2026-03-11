@@ -280,13 +280,13 @@ python scripts/plot_backtest.py --csv data/price_SPY.csv --mode price --alpha 0.
   - Threshold:
 
 
-    $$ \mathrm{thr} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}\}\right) $$
+    $$\mathrm{thr} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}\}\right$$
 
 
   - Label:
 
 
-    $$ y_t = \mathbf{1}_{\{L_{t+1} > \text{thr}\}} $$
+    $$y_{t} = \mathbf{1}_{\{L_{t+1} > \text{thr}\}}$$
 
 
 - Modeling:
