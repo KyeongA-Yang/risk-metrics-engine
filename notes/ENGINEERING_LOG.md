@@ -339,7 +339,7 @@ python scripts/run_coverage_grid.py
 ### Next
 - Upgrade to an out-of-sample backtest using a 1-step shift:
   - compare $L_t$ to $\mathrm{VaR}_{\alpha,t-1}$ (estimated from past only)
--Add a compact plot/report template to summarize coverage across the grid.
+- Add a compact plot/report template to summarize coverage across the grid.
 
 ---
 
