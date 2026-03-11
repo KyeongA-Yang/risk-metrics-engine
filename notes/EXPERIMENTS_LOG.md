@@ -217,15 +217,15 @@ Can a simple baseline (logistic regression) predict next-day extreme loss events
 ### Data
 - SPY daily prices (5y) already saved as `data/price_SPY.csv`
 - Converted to log returns and loss:
-  - $$ r_t = \log(P_t) - \log(P_{t-1}) $$
-  - $$ L_t = -r_t $$
+  - $r_t = \log(P_t) - \log(P_{t-1})$
+  - $L_t = -r_t$
 
 ### Setup
 - Features: `ret`, `vol20`, `var250`
 - Label:
   - `loss_t1 = L_{t+1}`
-  - Train-only threshold: $$ \text{thr} = q_{\text{label\_q}}(L_{t+1}) $$
-  - $$ y_t = 1\{ L_{t+1} > \text{thr} \} $$
+  - Train-only threshold: $\text{thr} = q_{\text{label\_q}}(L_{t+1})$
+  - $y_t = 1\{ L_{t+1} > \text{thr} \}$
 - Split: time-based 80/20 (no shuffle)
 - Model: `StandardScaler + LogisticRegression`
 - Evaluation:
