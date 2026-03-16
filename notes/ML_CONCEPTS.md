@@ -201,7 +201,11 @@ In real alerting, we often have a daily budget: “send only K alerts”.
 ### Definition (Recall@K)
 Let $\hat p_t$ be a score and select the top-K dates by $\hat p_t$.
 
-$$ \mathrm{Recall@K} = \frac{\#\{\text{true positives among top-K}\}}{\#\{\text{all true positives}\}} $$
+
+$$
+\mathrm{Recall@K} = \frac{\#\{\text{true positives among top-K}\}}{\#\{\text{all true positives}\}}
+$$
+
 
 ### Interpretation
 - High Recall@K means: “with only K alerts, we capture many extreme-loss days”.
@@ -233,4 +237,5 @@ Compare models using:
 - Threshold sweeps (precision/recall trade-off)
 
 ### Pitfall
-Non-linear models can overfit; prefer time-based splits and keep hyperparameters conservative.
+- Non-linear models can overfit
+  - prefer time-based splits and keep hyperparameters conservative.
