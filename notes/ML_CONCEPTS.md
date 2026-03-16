@@ -203,7 +203,7 @@ Let $\hat p_t$ be a score and select the top-K dates by $\hat p_t$.
 
 
 $$
-\mathrm{Recall@K} = \frac{\#\{\text{true positives among top-K}\}}{\#\{\text{all true positives}\}}
+\mathrm{Recall@K} = \frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{\left|\{t : y_t = 1\}\right|}
 $$
 
 
