@@ -403,3 +403,38 @@ python scripts/ml_extreme_loss_lags.py
 
 ---
 
+## 2026-03-16 — OOS (1-step shift) VaR backtest + same-day comparison + grid extension
+
+### Context
+- Upgrade VaR backtesting to a more proper out-of-sample (OOS) evaluation.
+- Compare same-day vs OOS results and extend coverage grid outputs for reporting.
+
+### Implementation
+- Implemented OOS backtesting helpers in `riskmetrics.backtest`:
+  - `var_violations_oos(loss, var_t)` compares $L_t$ vs $\mathrm{VaR}_{\alpha,t-1}$ via `shift(1)`.
+  - `backtest_report_oos(loss, var_t, alpha)` returns a compact dict (n, x, rates, LR_POF, p-value).
+- Verified behavior on:
+  - Synthetic long series (`data/long_pnl.csv`)
+  - Real SPY series (price → log returns → loss)
+- Extended coverage grid runner to produce a table with both modes:
+  - `mode = same_day` vs `mode = oos_shift1`
+  - Saved as a reporting-friendly CSV.
+
+### Pitfalls & Best Practices
+- OOS is leakage-safe: evaluate day $t$ with thresholds estimated using information up to $t-1$.
+- Expect `n` to drop by ~1 in OOS due to the shift.
+- Keep index alignment explicit via `pd.concat(...).dropna()` before computing violations.
+
+### How to run
+```bash
+python scripts/run_coverage_grid_oos.py
+```
+
+### Next
+- Add a summary plot for the grid (observed vs expected violation rate).
+- Consider extending to rolling ES and richer backtests (independence / clustering).
+
+---
+
+
+

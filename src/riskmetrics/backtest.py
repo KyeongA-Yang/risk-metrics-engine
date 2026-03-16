@@ -89,3 +89,40 @@ def backtest_report(loss: pd.Series, var: pd.Series, alpha: float) -> dict:
         "p_value": out["p_value"],
     }
 
+
+def var_violations_oos(loss: pd.Series, var_t: pd.Series) -> pd.Series:
+    """
+    Out-of-sample violations:
+    compare realized loss_t vs VaR_{t-1} (1-step shift).
+
+    Inputs:
+      - loss: realized loss series indexed by date t
+      - var_t: VaR series computed using data up to time t (rolling, includes t)
+
+    Output:
+      - violations indexed where both loss_t and var_{t-1} are available
+    """
+    if not isinstance(loss, pd.Series) or not isinstance(var_t, pd.Series):
+        raise TypeError("loss and var_t must be pandas Series")
+
+    var_prev = var_t.shift(1)  # VaR_{t-1} aligned to time t
+    aligned = pd.concat([loss.rename("loss"), var_prev.rename("var_prev")], axis=1).dropna()
+    return (aligned["loss"] > aligned["var_prev"]).astype(int)
+
+
+def backtest_report_oos(loss: pd.Series, var_t: pd.Series, alpha: float) -> dict:
+    """
+    Compact out-of-sample backtest report:
+    - violations defined as loss_t > VaR_{t-1}
+    - Kupiec POF test
+    """
+    viol = var_violations_oos(loss, var_t)
+    out = kupiec_pof_test(viol, alpha=alpha)
+    return {
+        "n": out["n"],
+        "x": out["x"],
+        "expected_rate": out["expected_rate"],
+        "observed_rate": out["observed_rate"],
+        "lr_pof": out["lr_pof"],
+        "p_value": out["p_value"],
+    }

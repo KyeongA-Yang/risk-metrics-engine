@@ -173,3 +173,40 @@ $$
   - `pd.concat([loss, var], axis=1).dropna()` then compare columns.
 
 ---
+
+## 8) Backtesting timing: same-day vs out-of-sample (1-step shift)
+
+### Same-day (contemporaneous) comparison
+Rolling VaR at time $t$ is computed using a window that includes time $t$:
+
+$$
+\mathrm{VaR}_{\alpha,t} = q_\alpha(L_{t-w+1}, \dots, L_t)
+$$
+
+A same-day violation compares realized loss to the same-day VaR:
+
+$$
+I_t^{\mathrm{same}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}}
+$$
+
+This is useful for sanity checks and diagnostics, but it can partially “use today’s information” in the threshold.
+
+### Out-of-sample (OOS) 1-step shift comparison (recommended)
+A more proper backtest evaluates day $t$ using a VaR estimated from information available up to $t-1$:
+
+$$
+I_t^{\mathrm{oos}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t-1}\}}
+$$
+
+In practice, if `rolling_historical_var` returns $\mathrm{VaR}_{\alpha,t}$, OOS is implemented by shifting:
+
+$$
+\mathrm{VaR}^{\mathrm{oos}}_{\alpha,t} = \mathrm{VaR}_{\alpha,t-1}
+$$
+
+### Practical note
+- OOS typically reduces the effective sample size by ~1 due to the shift.
+- Same-day and OOS results are often similar for large windows, but OOS is preferred for leakage-safe evaluation.
+
+---
+

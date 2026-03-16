@@ -370,3 +370,43 @@ Do lagged return features improve next-day extreme-loss prediction, and does a n
 
 ### Summary
 - lag features를 추가했을 때 Logit보다 RF가 AUC와 Recall@K에서 더 좋은 성능을 보여서, 비선형 패턴(상호작용)이 존재할 가능성을 확인했다. (그래도 정확도는 그렇게 높진 않음.)
+
+---
+
+## 2026-03-16 — Same-day vs OOS (1-step shift) VaR backtest on SPY + coverage grid
+
+### Question
+How different are same-day and out-of-sample (1-step shift) VaR coverage results?
+Does window length improve coverage on real market data (SPY)?
+
+### Data
+- SPY daily prices (5y) → log returns $r_t$ → loss $L_t = -r_t$
+- Also tested a synthetic long PnL series for sanity check.
+
+### Setup
+- Grid:
+  - $\alpha \in \{0.975, 0.99\}$
+  - window $\in \{125, 250, 500\}$
+- Same-day violations:
+  $$ I_t^{\mathrm{same}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}} $$
+- OOS violations:
+  $$ I_t^{\mathrm{oos}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t-1}\}} $$
+
+### Results
+- Short windows (125) show clear under-coverage (observed violation rate > expected), often rejected by Kupiec POF.
+- Longer windows (500) move observed rates closer to expected and are less likely to be rejected.
+- Same-day vs OOS differences were small in most settings (OOS uses 1 fewer observation), but OOS is preferred for leakage-safe evaluation.
+
+### Interpretation
+- Window length strongly affects tail quantile stability.
+- Real returns exhibit heavy tails / volatility clustering, challenging high-confidence (99%) historical VaR.
+
+### Next
+- Plot the grid summary (observed vs expected) for report-ready comparison.
+- Extend beyond coverage: rolling ES and independence/clustering diagnostics.
+
+### Summary
+- 같은 날의 손실이 VaR 계산에 들어가면 그 VaR로 다시 손실을 평가하는 구조라서, out-of-sample이 더 정석적이다. (결과 자체는 살짝만 달라짐.)
+- SPY에서 작은 window에서는 under-coverage가 나타나서 POF가 기각되기 쉽고, window를 키우면 안정화되면서 크게 개선된다.
+
+---
