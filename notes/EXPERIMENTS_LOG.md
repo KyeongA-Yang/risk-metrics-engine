@@ -306,4 +306,67 @@ $$ I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}} $$
 
 ---
 
+## 2026-03-16 — ML: extreme-loss prediction with lagged returns (Logit vs RF + alert-budget)
 
+### Question
+Do lagged return features improve next-day extreme-loss prediction, and does a non-linear baseline (RandomForest) outperform logistic regression under rare-event evaluation?
+
+### Data
+- SPY daily prices from `data/price_SPY.csv`
+- Returns/loss:
+  - $r_t = \log(P_t) - \log(P_{t-1})$
+  - $L_t = -r_t$
+
+### Setup
+- Feature set at time $t$:
+  - `ret`, `vol20` (20-day rolling std), `var250` (250-day rolling 1% quantile)
+  - lag features: `ret_lag1`…`ret_lag5`
+- Label:
+  - `loss_t1(t) = loss(t+1)`
+  - Train-only threshold: `thr = q_{label_q}(train.loss_t1)`
+  - $y_t = 1\{L_{t+1} > \mathrm{thr}\}$
+- Split:
+  - chronological 80/20 train/test (no shuffle)
+- label_q:
+  - `label_q = 0.90` (top 10% tomorrow-loss days as positives)
+- Models:
+  - Logistic regression (scaled, class_weight balanced)
+  - RandomForest (balanced_subsample)
+- Metrics:
+  - ROC-AUC (ranking)
+  - Threshold sweep (precision/recall)
+  - Alert-budget: Recall@K for `K ∈ {5,10,20,50}`
+
+### Results (label_q=0.90)
+- Class balance:
+  - train positives: 81 / 804 (0.1007)
+  - test positives: 8 / 201 (0.0398)
+- Logistic regression:
+  - ROC-AUC ≈ 0.453
+  - Alert-budget:
+    - Recall@5 = 0.00
+    - Recall@10 = 0.00
+    - Recall@20 = 0.00
+    - Recall@50 = 0.25
+- RandomForest:
+  - ROC-AUC ≈ 0.694
+  - Alert-budget:
+    - Recall@5 = 0.00
+    - Recall@10 = 0.125
+    - Recall@20 = 0.125
+    - Recall@50 = 0.50
+
+### Interpretation
+- Logistic regression shows weak ranking ability (AUC < 0.5) and poor top-K capture at small K.
+- RandomForest improves ranking (AUC ~ 0.69) and captures more extreme days under an alert budget (Recall@50 ~ 0.50).
+- Suggests non-linear interactions among lagged returns and volatility/state features may matter.
+- Test positives are few (n=8), so top-K metrics can be noisy; results should be confirmed with additional periods or walk-forward validation.
+
+### Next
+- Add Precision@K and plot precision–recall trade-offs for alerting.
+- Inspect feature importance (RF) to understand which lags/features drive performance.
+- Try simpler/non-leaky state features (e.g., rolling vol only) and compare robustness.
+- Consider walk-forward / rolling window evaluation to reduce sensitivity to a single split.
+
+### Summary
+- lag features를 추가했을 때 Logit보다 RF가 AUC와 Recall@K에서 더 좋은 성능을 보여서, 비선형 패턴(상호작용)이 존재할 가능성을 확인했다. (그래도 정확도는 그렇게 높진 않음.)

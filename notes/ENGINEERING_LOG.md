@@ -347,3 +347,59 @@ python scripts/run_coverage_grid.py
 
 ---
 
+## 2026-03-16 — ML baseline upgrade: lagged returns + alert-budget eval + RF comparison
+
+### Context
+- Extend the time-series ML baseline beyond single-day features.
+- Goals:
+  - Add lagged return features (`ret_lag1`…`ret_lag5`)
+  - Evaluate with alert-budget metrics (Recall@K)
+  - Compare a linear baseline (LogisticRegression) vs a simple non-linear model (RandomForest)
+
+### Implementation
+- Created/updated script:
+  - `scripts/ml_extreme_loss_lags.py`
+- Data pipeline (SPY):
+  - Load `data/price_SPY.csv`
+  - Compute returns and losses:
+    - $r_t = \log(P_t) - \log(P_{t-1})$
+    - $L_t = -r_t$
+  - Build features at time $t$:
+    - `ret`, `vol20 = rolling std(ret, 20)`, `var250 = rolling quantile(ret, 0.01, 250)`
+    - lagged returns: `ret_lag1`…`ret_lag5` via `shift(k)`
+  - Build label using next-day loss:
+    - `loss_t1 = shift(loss, -1)` (so `loss_t1(t)=loss(t+1)`)
+- Leakage-safe labeling:
+  - compute threshold on train only:
+    - `thr = quantile(train.loss_t1, label_q)`
+  - label: `y = 1{loss_t1 > thr}`
+- Time-based split:
+  - chronological 80/20 split (no shuffle)
+- Models:
+  - Logistic regression pipeline: `StandardScaler + LogisticRegression(class_weight="balanced")`
+  - Optional non-linear baseline: `RandomForestClassifier(class_weight="balanced_subsample")`
+- Evaluation outputs:
+  - ROC-AUC (when both classes exist)
+  - threshold sweep (precision/recall at multiple thresholds)
+  - alert-budget metric: Recall@K for K ∈ {5,10,20,50}
+
+### Pitfalls & Best Practices
+- Always compute label threshold on train only (avoid leakage).
+- Use time-based split (no shuffle) for time series.
+- Rare-event classification: avoid relying on accuracy; use ROC-AUC and alert-budget metrics.
+- Keep features “available at time t” only (lags must be `shift(+k)` not `shift(-k)`).
+
+### How to run
+```bash
+python scripts/ml_extreme_loss_lags.py
+```
+
+### Next
+- Add Precision@K alongside Recall@K for alert quality.
+- Inspect feature importance (RF) or coefficients (Logit) to interpret signals.
+- Consider more realistic evaluation
+  - walk-forward validation
+  - calibrated probabilities (Platt / isotonic)
+
+---
+
