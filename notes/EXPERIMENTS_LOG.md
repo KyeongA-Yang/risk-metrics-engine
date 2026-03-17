@@ -388,9 +388,16 @@ Does window length improve coverage on real market data (SPY)?
   - $\alpha \in \{0.975, 0.99\}$
   - window $\in \{125, 250, 500\}$
 - Same-day violations:
-  $$ I_t^{\mathrm{same}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}} $$
+
+
+  $$I_t^{\mathrm{same}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}}$$
+
+
 - OOS violations:
-  $$ I_t^{\mathrm{oos}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t-1}\}} $$
+
+
+  $$I_t^{\mathrm{oos}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t-1}\}}$$
+
 
 ### Results
 - Short windows (125) show clear under-coverage (observed violation rate > expected), often rejected by Kupiec POF.
@@ -411,7 +418,7 @@ Does window length improve coverage on real market data (SPY)?
 
 ---
 
-## 2026-03-?7 — ML diagnostics: alert-budget metrics + expanding walk-forward evaluation
+## 2026-03-17 — ML diagnostics: alert-budget metrics + expanding walk-forward evaluation
 
 ### Question
 1) With a fixed daily alert budget (Top-K alerts), how well do we capture next-day extreme-loss events?  
@@ -423,8 +430,8 @@ Does window length improve coverage on real market data (SPY)?
 - Added a more realistic **time-series evaluation design**:
   - **Expanding walk-forward** splits (train grows over folds; test is the next block)
   - **Fold-specific, train-only thresholding** to avoid leakage:
-    - $$ \mathrm{thr}^{(\mathrm{fold})} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train\ fold}\}\right) $$
-    - $$ y_t^{(\mathrm{fold})} = \mathbf{1}_{\{L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\}} $$
+    - $\mathrm{thr}^{(\mathrm{fold})} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train\ fold}\}\right)$
+    - $y_t^{(\mathrm{fold})} = \mathbf{1}_{\{L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\}}$
 
 ### Results (high-level)
 - Single-split results can be misleading for rare events (positives are few / thresholds are sensitive).
