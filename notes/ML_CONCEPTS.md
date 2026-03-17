@@ -205,20 +205,20 @@ Define $\mathrm{TopK}$ as the set of $K$ time points with the largest $\hat p_t$
 ### Definition (Recall@K)
 Among all true positives, how many are captured within the top-$K$ alerts:
 
+
 $$
-\mathrm{Recall@K}
-=
-\frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{\left|\{t : y_t = 1\}\right|}
+\mathrm{Recall@K}=\frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{\left|\{t : y_t = 1\}\right|}
 $$
+
 
 ### Definition (Precision@K)
 Among the top-$K$ alerts, what fraction are true positives:
 
+
 $$
-\mathrm{Precision@K}
-=
-\frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{K}
+\mathrm{Precision@K}=\frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{K}
 $$
+
 
 ### Interpretation
 - **High Recall@K** means: “with only $K$ alerts, we catch many extreme-loss days.”
@@ -308,17 +308,13 @@ For fold $k$, train uses all data up to a moving cutoff and test uses the next b
 If the label uses a threshold (e.g., top 10% of tomorrow loss), the threshold must be computed using train only in each fold:
 
 $$
-\mathrm{thr}^{(\mathrm{fold})}
-=
-q_{\mathrm{label\_q}}\left(\{L_{t+1} : t \in \mathrm{train\ fold}\}\right)
+\mathrm{thr}^{(\mathrm{fold})}=q_{\mathrm{label\_q}}\left(\{L_{t+1} : t \in \mathrm{train\ fold}\}\right)
 $$
 
 Then define labels in train and test using the fold-specific threshold:
 
 $$
-y_t^{(\mathrm{fold})}
-=
-\mathbf{1}_{\{L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\}}
+y_t^{(\mathrm{fold})}=\mathbf{1}_{\{L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\}}
 $$
 
 ### Practical note
