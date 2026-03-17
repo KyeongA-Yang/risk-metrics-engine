@@ -427,15 +427,14 @@ $$ I_t^{\mathrm{oos}}=\mathbf{1}_{\{\,L_t > \mathrm{VaR}_{\alpha,t-1}\,\}}$$
   - Precision@K and Recall@K for $K \in \{5,10,20,50\}$
 - Added a more realistic **time-series evaluation design**:
   - **Expanding walk-forward** splits (train grows over folds; test is the next block)
-  - **Fold-specific, train-only thresholding** to avoid leakage:
-  Threshold:
+- **Fold-specific, train-only thresholding** to avoid leakage:
+  - Threshold:
 
-$$ \mathrm{thr}^{(\mathrm{fold})} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}^{(\mathrm{fold})}\}\right) $$
+    $$ \mathrm{thr}^{(\mathrm{fold})} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}^{(\mathrm{fold})}\}\right) $$
 
-  Label:
+  - Label:
 
-
-$$ y_t^{(\mathrm{fold})} = \mathbb{I}\left(L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\right) $$
+    $$ y_t^{(\mathrm{fold})} = \mathbb{I}\left(L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\right) $$
 
 
 ### Results (high-level)
