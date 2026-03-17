@@ -436,5 +436,60 @@ python scripts/run_coverage_grid_oos.py
 
 ---
 
+## 2026-03-17 — ML alerting diagnostics: Precision@K/Recall@K + model interpretation + expanding walk-forward tests
+
+### Context
+- Extend the ML baseline for next-day extreme-loss prediction by:
+  - adding alert-budget metrics (Precision@K alongside Recall@K),
+  - interpreting models (Logit coefficients, RF feature importance),
+  - preparing a more realistic evaluation design (expanding walk-forward),
+  - and adding tests to ensure the walk-forward split/eval utilities behave correctly.
+- Goal: make the ML pipeline both **reportable** (metrics + interpretation) and **reliable** (tests).
+
+### Implementation
+- Added alert-budget metrics:
+  - Implemented `precision_at_k(y_true, scores, k)` consistent with existing `recall_at_k`.
+  - Updated printing to report `Precision@K / Recall@K` for selected K values.
+- Added model interpretability outputs:
+  - Logistic regression: extracted coefficients from the pipeline (`named_steps["logisticregression"]`) and printed sorted table.
+  - Random forest: printed `feature_importances_` sorted descending.
+- Added expanding walk-forward support:
+  - Moved reusable ML utilities into `src/riskmetrics/ml.py` so they are importable and testable.
+  - Implemented/used:
+    - `walk_forward_expanding_indices(...)` → produces (train_idx, test_idx) folds
+    - `eval_walk_forward_expanding(...)` → fold-wise leakage-safe thresholding + evaluation
+- Added pytest coverage for walk-forward:
+  - Split sanity test: train expands, test moves forward, no overlap.
+  - Output sanity test: result DataFrame columns exist and metric bounds are valid.
+
+### Pitfalls & Best Practices
+- `scripts/` is not a Python package by default; tests should import from `src/riskmetrics/...`.
+- Always compute label thresholds on train only to avoid leakage:
+  - fold-specific thresholding is necessary when using quantile-based labels.
+- Alert-budget metrics are more deployment-realistic than fixed thresholds:
+  - fixed threshold can be unstable when scores are clustered or classes are rare.
+- Interpretation outputs are diagnostic, not causal:
+  - RF importance can be biased; correlated features can share importance.
+  - Logit coefficients are easier to interpret when features are standardized.
+
+### How to run
+```bash
+# Run tests
+pytest -q
+
+# Run the ML script (example)
+python scripts/ml_extreme_loss_lags.py
+```
+
+### Next
+- Add walk-forward evaluation reporting:
+  - aggregate fold metrics (mean/std) for AUC, Precision@K, Recall@K.
+- Add calibrated probabilities:
+  - Platt scaling / isotonic calibration on a validation fold.
+- 	Upgrade evaluation to rolling/blocked walk-forward and compare stability vs single split.
+
+---
+
+
 
 

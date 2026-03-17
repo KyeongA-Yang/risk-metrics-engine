@@ -410,3 +410,43 @@ Does window length improve coverage on real market data (SPY)?
 - SPY에서 작은 window에서는 under-coverage가 나타나서 POF가 기각되기 쉽고, window를 키우면 안정화되면서 크게 개선된다.
 
 ---
+
+## 2026-03-?7 — ML diagnostics: alert-budget metrics + expanding walk-forward evaluation
+
+### Question
+1) With a fixed daily alert budget (Top-K alerts), how well do we capture next-day extreme-loss events?  
+2) Does performance look stable across time under an expanding walk-forward evaluation (vs a single 80/20 split)?
+
+### Setup (only what’s new/important)
+- Added **alert-budget metrics** to evaluation:
+  - Precision@K and Recall@K for $K \in \{5,10,20,50\}$
+- Added a more realistic **time-series evaluation design**:
+  - **Expanding walk-forward** splits (train grows over folds; test is the next block)
+  - **Fold-specific, train-only thresholding** to avoid leakage:
+    - $$ \mathrm{thr}^{(\mathrm{fold})} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train\ fold}\}\right) $$
+    - $$ y_t^{(\mathrm{fold})} = \mathbf{1}_{\{L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\}} $$
+
+### Results (high-level)
+- Single-split results can be misleading for rare events (positives are few / thresholds are sensitive).
+- Walk-forward diagnostics showed:
+  - thresholds vary by fold (regime-dependent tails),
+  - metrics vary across folds (regime dependence / instability).
+
+### Interpretation
+- **Precision@K / Recall@K** are more deployment-relevant than a fixed probability cutoff:
+  - Precision@K reflects false-alarm burden under a daily alert budget.
+  - Recall@K reflects how many extreme days we catch with limited alerts.
+- **Expanding walk-forward** is preferred for leakage-safe time-series ML reporting:
+  - repeated “train on past → test on future” evaluation,
+  - exposes regime shifts that a single split can hide.
+
+### Next
+- Summarize walk-forward results in a compact table (mean/std across folds):
+  - ROC-AUC, Precision@K, Recall@K
+- Add probability calibration (Platt / isotonic) and evaluate calibration quality.
+- Compare expanding vs rolling walk-forward (fixed-length training) for robustness.
+
+### Summary
+- alert-budget 지표(Precision@K/Recall@K)와 expanding walk-forward 평가를 추가해, 단일 split보다 현실적인 방식으로 알림 예산 관점 성능 + 시간에 따른 성능 변동을 점검할 기반을 만들었다.
+
+---

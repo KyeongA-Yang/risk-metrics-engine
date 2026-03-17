@@ -192,27 +192,44 @@ Including “future lags” (e.g., `shift(-1)` inside features) leaks informatio
 
 ---
 
-## 9) Alert-budget evaluation (Recall@K)
+## 9) Alert-budget evaluation (Precision@K / Recall@K)
 
 ### Why top-K alerts?
-For rare events, fixed thresholds (e.g., 0.5) may be impractical.  
-In real alerting, we often have a daily budget: “send only K alerts”.
+For rare events, fixed probability thresholds (e.g., 0.5) can be impractical.  
+In real alerting, we often have a daily budget: “send only $K$ alerts.”
+
+### Setup
+Let $\hat p_t$ be a model score (predicted probability) at time $t$.  
+Define $\mathrm{TopK}$ as the set of $K$ time points with the largest $\hat p_t$.
 
 ### Definition (Recall@K)
-Let $\hat p_t$ be a score and select the top-K dates by $\hat p_t$.
-
+Among all true positives, how many are captured within the top-$K$ alerts:
 
 $$
-\mathrm{Recall@K} = \frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{\left|\{t : y_t = 1\}\right|}
+\mathrm{Recall@K}
+=
+\frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{\left|\{t : y_t = 1\}\right|}
 $$
 
+### Definition (Precision@K)
+Among the top-$K$ alerts, what fraction are true positives:
+
+$$
+\mathrm{Precision@K}
+=
+\frac{\left|\{t \in \mathrm{TopK} : y_t = 1\}\right|}{K}
+$$
 
 ### Interpretation
-- High Recall@K means: “with only K alerts, we capture many extreme-loss days”.
-- This is often more meaningful than accuracy for rare-event risk alerting.
+- **High Recall@K** means: “with only $K$ alerts, we catch many extreme-loss days.”
+- **High Precision@K** means: “among the $K$ alerts, many are real extreme-loss days.”
+- There is often a trade-off:
+  - increasing Recall@K typically lowers Precision@K (more false alarms).
 
-### Pitfall
-Recall@K can look unstable when the test period has very few positives; always report the positive count.
+### Practical notes
+- Always report the number of positives in the test period:
+  - If $|\{t : y_t=1\}|$ is tiny, Recall@K is unstable.
+- If a threshold sweep flips from “almost none” to “almost all,” the score distribution may be poorly separated.
 
 ---
 
@@ -221,21 +238,91 @@ Recall@K can look unstable when the test period has very few positives; always r
 ### Logistic Regression (linear score)
 Logistic regression uses a linear score:
 
-$$ s_t = \beta^\top X_t $$
-$$ \hat p_t = \sigma(s_t) = \frac{1}{1+e^{-s_t}} $$
+$$
+s_t = \beta^\top X_t
+$$
 
-It may fail when the signal is non-linear or depends on interactions.
+and maps it to probability via the sigmoid:
+
+$$
+\hat p_t = \sigma(s_t) = \frac{1}{1+e^{-s_t}}
+$$
+
+It may fail when the signal is non-linear or depends on interactions (e.g., “volatility high AND lagged return negative”).
 
 ### Random Forest (non-linear baseline)
-Random forests combine many decision trees and can capture non-linear rules and feature interactions  
-(e.g., “high volatility AND negative lagged return”).
+Random forests combine many decision trees and can capture non-linear rules and feature interactions.  
+They often improve ranking metrics (ROC-AUC) when the true decision boundary is non-linear.
 
-### Practical diagnostic
+### Practical diagnostic (what to compare)
 Compare models using:
 - ROC-AUC (ranking ability)
-- Alert-budget metrics (Recall@K)
+- Alert-budget metrics (Precision@K / Recall@K)
 - Threshold sweeps (precision/recall trade-off)
 
-### Pitfall
-- Non-linear models can overfit
-  - prefer time-based splits and keep hyperparameters conservative.
+### Pitfalls
+- Non-linear models can overfit on time series:
+  - Use time-based splits (no shuffle)
+  - Keep hyperparameters conservative (e.g., larger `min_samples_leaf`)
+- A higher ROC-AUC does not automatically imply better alerting at small $K$:
+  - Always check Precision@K / Recall@K.
+
+---
+
+## 11) Model interpretation (coefficients vs feature importance)
+
+### Logistic coefficients (after scaling)
+If features are standardized (e.g., StandardScaler), coefficients are more comparable.  
+A positive coefficient means increasing that feature tends to increase $s_t$ and $\hat p_t$.
+
+Practical workflow:
+- Sort coefficients by magnitude and sign:
+  - Top positive coefficients: “increase $P(y=1)$”
+  - Top negative coefficients: “decrease $P(y=1)$”
+
+### Random Forest feature importance
+Random forest feature importance measures how much each feature reduces impurity across trees.  
+It is useful as a first-pass diagnostic, but:
+- it can be biased (e.g., toward continuous variables),
+- it does not directly imply causal effect,
+- correlated features can share importance.
+
+Practical workflow:
+- Print top-10 important features
+- Compare with Logit coefficients for consistency
+
+---
+
+## 12) Evaluation design for time series (walk-forward idea)
+
+### Why walk-forward?
+A single 80/20 split can be misleading under regime change.  
+Walk-forward evaluation checks performance across multiple consecutive test blocks.
+
+### Expanding walk-forward (concept)
+For fold $k$, train uses all data up to a moving cutoff and test uses the next block:
+- train grows over time (expanding)
+- test always occurs after train (no look-ahead)
+
+### Leakage-safe labeling in walk-forward
+If the label uses a threshold (e.g., top 10% of tomorrow loss), the threshold must be computed using train only in each fold:
+
+$$
+\mathrm{thr}^{(\mathrm{fold})}
+=
+q_{\mathrm{label\_q}}\left(\{L_{t+1} : t \in \mathrm{train\ fold}\}\right)
+$$
+
+Then define labels in train and test using the fold-specific threshold:
+
+$$
+y_t^{(\mathrm{fold})}
+=
+\mathbf{1}_{\{L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\}}
+$$
+
+### Practical note
+Walk-forward is preferred when reporting time-series ML results because it better reflects deployment:
+“train on past → predict the future,” repeated across time.
+
+---
