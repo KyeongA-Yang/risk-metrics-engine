@@ -429,7 +429,7 @@ $$ I_t^{\mathrm{oos}}=\mathbf{1}_{\{\,L_t > \mathrm{VaR}_{\alpha,t-1}\,\}}$$
   - **Expanding walk-forward** splits (train grows over folds; test is the next block)
   - **Fold-specific, train-only thresholding** to avoid leakage:
     - $\mathrm{thr}^{(\mathrm{fold})} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train\ fold}\}\right)$
-    - $y_t^{(\mathrm{fold})}=\mathbf{1}_{\{\,L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\,\}}$
+    - $y_t^{(\mathrm{fold})}=\mathbf{1}_{\{\,L_{t+1}>\mathrm{thr}^{(\mathrm{fold})}\,\}}$
 
 ### Results (high-level)
 - Single-split results can be misleading for rare events (positives are few / thresholds are sensitive).
