@@ -428,11 +428,9 @@ $$ I_t^{\mathrm{oos}}=\mathbf{1}_{\{\,L_t > \mathrm{VaR}_{\alpha,t-1}\,\}}$$
 - Added a more realistic **time-series evaluation design**:
   - **Expanding walk-forward** splits (train grows over folds; test is the next block)
 - **Fold-specific, train-only thresholding** to avoid leakage:
-  - Threshold:
+  - Threshold & Label:
 
 $$ \mathrm{thr}^{(\mathrm{fold})} = q_{\mathrm{label\_q}}\left(\{L_{t+1}: t \in \mathrm{train}^{(\mathrm{fold})}\}\right) $$
-
-  - Label:
 
 $$ y_t^{(\mathrm{fold})} = \mathbb{I}\left(L_{t+1} > \mathrm{thr}^{(\mathrm{fold})}\right) $$
 
