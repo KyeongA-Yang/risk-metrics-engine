@@ -490,6 +490,89 @@ python scripts/ml_extreme_loss_lags.py
 
 ---
 
+## 2026-03-18 — Rolling ES + ES severity diagnostics (same-day vs OOS)
+
+### Context
+- Extend the risk-metrics engine beyond VaR coverage to include **rolling Expected Shortfall (ES)**.
+- Goal: after implementing rolling ES, add a practical “backtest-like” summary that reports **severity conditional on VaR violations**, and compare **same-day** vs **OOS (1-step shift)** alignment.
+
+### Implementation
+- Implemented `rolling_historical_es` in `src/riskmetrics/es.py`:
+  - Convert PnL to loss: `loss = -pnl`
+  - For each rolling window (size `w`):
+    - Compute window VaR: `VaR_t = quantile(loss_window, alpha)`
+    - Compute ES: `ES_t = mean(loss_window[loss_window >= VaR_t])`
+  - Returned a `pd.Series` aligned to the input index with `NaN` for the first `w-1` rows.
+- Added ES “severity diagnostics” helpers in `src/riskmetrics/backtest.py`:
+  - `es_backtest_report(loss, var_t, es_t, alpha)`
+  - `es_backtest_report_oos(loss, var_t, es_t, alpha)` (1-step shift alignment)
+  - Reported:
+    - coverage fields: `n, x, expected_rate, observed_rate`
+    - conditional severity fields (on VaR-violation dates):
+      - `mean_loss_given_violation`
+      - `mean_es_given_violation`
+      - `mean_excess_over_var = mean(loss - VaR | violation)`
+      - `mean_excess_over_es  = mean(loss - ES  | violation)`
+- Added/updated pytest coverage:
+  - validated return types / shapes / NaN prefix behavior for rolling ES
+  - ensured ES definition matches “mean beyond VaR” on a small hand-check example
+
+### Pitfalls & Best Practices
+- ES is not naturally “backtested” by a simple coverage count like VaR.
+  - VaR has a clean Bernoulli event ($L_t > \mathrm{VaR}$) → coverage tests like Kupiec POF.
+  - ES is about **tail magnitude**, so diagnostics are better framed as **severity given violation**.
+- Index alignment matters even more once you mix `loss`, `VaR`, and `ES`:
+  - always align with `pd.concat([...], axis=1).dropna()` before computing conditional means
+- Same-day vs OOS:
+  - coverage (`n, x`) is often similar for large windows
+  - ES-related summaries can change depending on whether you compare $L_t$ to $(\mathrm{VaR}_t, \mathrm{ES}_t)$ or shifted $(\mathrm{VaR}_{t-1}, \mathrm{ES}_{t-1})$
+  - prefer OOS alignment for leakage-safe reporting
+
+### How to run
+```bash
+# activate env
+cd ~/projects/risk-metrics-engine
+source .venv/bin/activate
+
+# quick check on SPY (alpha=0.99, window=250)
+python - << 'PY'
+import numpy as np
+import pandas as pd
+from riskmetrics.var import rolling_historical_var
+from riskmetrics.es import rolling_historical_es
+from riskmetrics.backtest import es_backtest_report, es_backtest_report_oos
+
+alpha = 0.99
+window = 250
+
+df = pd.read_csv("data/price_SPY.csv")
+df["date"] = pd.to_datetime(df["date"])
+df = df.sort_values("date").set_index("date")
+
+price = df["price"].astype(float)
+pnl = np.log(price).diff().dropna()
+loss = -pnl
+
+rvar = rolling_historical_var(pnl, window=window, alpha=alpha)
+res  = rolling_historical_es(pnl, window=window, alpha=alpha)
+
+print("=== ES report (same-day) ===")
+print(es_backtest_report(loss, rvar, res, alpha=alpha))
+
+print("\n=== ES report (OOS shift1) ===")
+print(es_backtest_report_oos(loss, rvar, res, alpha=alpha))
+PY
+
+# run tests
+pytest -q
+```
+
+### Next
+- Extend ES severity diagnostics to a small grid (alpha × window) and compare stability across windows.
+- Add independence / clustering checks for VaR violations (e.g., “do violations cluster in streaks?”).
+- Build a report-ready plot overlaying loss, VaR, and ES with violation markers, and save to PNG for GitHub.
+
+---
 
 
 

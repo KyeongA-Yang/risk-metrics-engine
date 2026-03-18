@@ -459,3 +459,66 @@ $$ y_t^{(\mathrm{fold})} = \mathbb{I}\left(L_{t+1} > \mathrm{thr}^{(\mathrm{fold
 - alert-budget 지표(Precision@K/Recall@K)와 expanding walk-forward 평가를 추가해, 단일 split보다 현실적인 방식으로 알림 예산 관점 성능 + 시간에 따른 성능 변동을 점검할 기반을 만들었다.
 
 ---
+
+## 2026-03-18 — Risk: Rolling ES + ES severity diagnostics (SPY, same-day vs OOS)
+
+### Question
+After implementing Rolling Historical ES, can we summarize **tail severity conditional on VaR violations** (rather than using a simple VaR (coverage count))?
+- Do the ES-based severity diagnostics meaningfully differ between **same-day** vs **OOS (1-step shift)** evaluation?
+
+### Data
+- SPY daily prices from `data/price_SPY.csv`
+- Returns / loss:
+  - $r_t = \log(P_t) - \log(P_{t-1})$
+  - $L_t = -r_t$
+- Length: ~5y daily data (after diff + rolling, effective n is reduced)
+
+### Setup
+- Parameters:
+  - $\alpha = 0.99$
+  - window $w = 250$
+- Rolling metrics:
+  - rolling historical VaR: `rolling_historical_var(pnl, window=w, alpha=alpha)`
+  - rolling historical ES: `rolling_historical_es(pnl, window=w, alpha=alpha)`
+- Backtest timing:
+  - same-day: compare $L_t$ vs $\mathrm{VaR}_{\alpha,t}$ and use $\mathrm{ES}_{\alpha,t}$
+  - OOS shift1: compare $L_t$ vs $\mathrm{VaR}_{\alpha,t-1}$ and use $\mathrm{ES}_{\alpha,t-1}$
+- ES “backtest” output is **severity diagnostics conditional on VaR violations**:
+  - $n, x$ (same as VaR coverage report)
+  - mean_loss_given_violation = mean$(L_t \mid L_t > \mathrm{VaR})$
+  - mean_es_given_violation = mean$(\mathrm{ES}_t \mid L_t > \mathrm{VaR})$
+  - mean_excess_over_var = mean$(L_t - \mathrm{VaR}_t \mid L_t > \mathrm{VaR}_t)$
+  - mean_excess_over_es  = mean$(L_t - \mathrm{ES}_t  \mid L_t > \mathrm{VaR}_t)$
+
+### Results
+- **same-day**
+  - n = 1006, x = 19, observed_rate ≈ 0.0188867
+  - mean_loss_given_violation ≈ 0.0336206
+  - mean_es_given_violation   ≈ 0.0314668
+  - mean_excess_over_var      ≈ 0.0073735
+  - mean_excess_over_es       ≈ 0.0021538
+
+- **OOS shift1**
+  - n = 1005, x = 19, observed_rate ≈ 0.0189055
+  - mean_loss_given_violation ≈ 0.0336206
+  - mean_es_given_violation   ≈ 0.0285873
+  - mean_excess_over_var      ≈ 0.0094373
+  - mean_excess_over_es       ≈ 0.0050332
+
+### Interpretation
+- From a VaR coverage perspective, SPY still shows **under-coverage**: observed violation rate is higher than the expected 1% at alpha=0.99.
+- ES is not naturally evaluated by a simple “violation count test” like VaR. Instead, ES is better summarized via **severity diagnostics conditional on VaR violations**, such as how much realized loss exceeds the VaR/ES level on violation days.
+- Same-day vs OOS differences are small for coverage (n, x), but ES-alignment choices matter:
+  - depending on whether we pair severity with ES_t (same-day) vs ES_{t-1} (OOS shift),
+    `mean_es_given_violation` and `mean_excess_over_es` can differ.
+  - OOS is the more leakage-safe reference for reporting.
+
+### Next
+- Extend ES diagnostics to a small grid (alpha × window) to compare how **tail severity** stabilizes as window length increases.
+- Add independence / clustering diagnostics for VaR violations (e.g., whether violations occur in streaks).
+- Create a report-ready plot overlaying **loss, VaR, and ES**, with markers on violation dates, to visually validate severity behavior.
+
+### Summary
+- SPY에서 ES를 rolling으로 계산하고, 위반 시 손실이 VaR/ES를 얼마나 초과하는지를 요약해 severity를 확인했다.
+
+---

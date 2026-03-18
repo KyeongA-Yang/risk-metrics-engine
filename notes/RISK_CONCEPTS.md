@@ -210,3 +210,68 @@ $$
 
 ---
 
+## 9) Rolling ES and ES diagnostics (conditional severity)
+
+### Rolling ES (within-window definition)
+Rolling ES at time $t$ is computed from the same rolling window used for rolling VaR:
+
+$$
+\mathrm{VaR}_{\alpha,t} = q_\alpha\left(L_{t-w+1}, \dots, L_t\right)
+$$
+
+$$
+\mathrm{ES}_{\alpha,t} = \mathbb{E}\left[L \mid L \ge \mathrm{VaR}_{\alpha,t}\right]
+\quad \text{estimated within the same window}
+$$
+
+In code (historical / nonparametric), ES is computed as the mean of losses in the window that exceed the window’s VaR threshold.
+
+### Why ES is not “backtested” by a simple violation count
+VaR naturally produces a coverage event:
+
+$$
+I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t}\}}
+$$
+
+so we can test whether $\mathbb{E}[I_t] \approx 1-\alpha$ (Kupiec POF).
+
+ES is different:
+- ES is a *tail mean*, not a cutoff.
+- There is no direct “coverage probability” like VaR.
+- Therefore ES is usually evaluated with *severity diagnostics* rather than a simple pass/fail count.
+
+### Practical ES diagnostics conditional on VaR violations
+A simple and useful diagnostic is to look only at VaR-violation days ($L_t > \mathrm{VaR}_{\alpha,t}$):
+
+- Mean realized loss on violation days:
+
+$$
+\mathbb{E}\left[L_t \mid L_t > \mathrm{VaR}_{\alpha,t}\right]
+$$
+
+- Mean ES level on the same violation days:
+
+$$
+\mathbb{E}\left[\mathrm{ES}_{\alpha,t} \mid L_t > \mathrm{VaR}_{\alpha,t}\right]
+$$
+
+- Mean excess over VaR / ES:
+
+$$
+\mathbb{E}\left[L_t - \mathrm{VaR}_{\alpha,t} \mid L_t > \mathrm{VaR}_{\alpha,t}\right]
+$$
+
+$$
+\mathbb{E}\left[L_t - \mathrm{ES}_{\alpha,t} \mid L_t > \mathrm{VaR}_{\alpha,t}\right]
+$$
+
+### Same-day vs OOS for ES diagnostics
+For leakage-safe evaluation, use OOS shift (compare $L_t$ with $\mathrm{VaR}_{\alpha,t-1}$ and $\mathrm{ES}_{\alpha,t-1}$):
+
+$$
+I_t^{\mathrm{oos}} = \mathbf{1}_{\{L_t > \mathrm{VaR}_{\alpha,t-1}\}}
+$$
+
+and compute severity diagnostics on those OOS-violation days.
+
+---

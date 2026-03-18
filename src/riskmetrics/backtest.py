@@ -126,3 +126,135 @@ def backtest_report_oos(loss: pd.Series, var_t: pd.Series, alpha: float) -> dict
         "lr_pof": out["lr_pof"],
         "p_value": out["p_value"],
     }
+
+
+def es_backtest_report(loss: pd.Series, var: pd.Series, es:pd.Series, alpha: float) -> dict:
+    """
+    ES backtest-style summary (severity-focused), using same-day VaR threshold.
+
+    - Align (loss, var, es) by index
+    - Define violations by VaR: loss_t > VaR_t
+    - Summarize tail severity on violation days:
+        * mean_loss_given_violation
+        * mean_es_given_violation
+        * mean_excess_over_var = E[loss - VaR | violation]
+        * mean_excess_over_es  = E[loss - ES  | violation]
+
+    Notes:
+    - ES is not typically "backtested" by a simple coverage count like VaR.
+      Here we report severity diagnostics conditional on VaR violations.
+    """
+    if not isinstance(loss, pd.Series) or not isinstance(var, pd.Series) or not isinstance(es, pd.Series):
+        raise TypeError("loss, var, es must be pandas Series")
+    if not (0.0 < alpha < 1.0):
+        raise ValueError("alpha must be in (0,1)")
+
+    aligned = pd.concat(
+        [loss.rename("loss"), var.rename("var"), es.rename("es")],
+        axis=1,
+    ).dropna()
+
+    n = int(len(aligned))
+    if n == 0:
+        raise ValueError("Aligned series is empty (check indices / NaNs).")
+
+    viol = (aligned["loss"] > aligned["var"]).astype(int)
+    x = int(viol.sum())
+
+    expected_rate = 1.0 - alpha
+    observed_rate = float(x / n)
+
+    if x == 0:
+        # No violation days → severity stats undefined
+        return {
+            "n": n,
+            "x": x,
+            "expected_rate": expected_rate,
+            "observed_rate": observed_rate,
+            "mean_loss_given_violation": float("nan"),
+            "mean_es_given_violation": float("nan"),
+            "mean_excess_over_var": float("nan"),
+            "mean_excess_over_es": float("nan"),
+        }
+
+    tail = aligned.loc[viol == 1]
+    mean_loss = float(tail["loss"].mean())
+    mean_es = float(tail["es"].mean())
+    mean_excess_var = float((tail["loss"] - tail["var"]).mean())
+    mean_excess_es = float((tail["loss"] - tail["es"]).mean())
+
+    return {
+        "n": n,
+        "x": x,
+        "expected_rate": expected_rate,
+        "observed_rate": observed_rate,
+        "mean_loss_given_violation": mean_loss,
+        "mean_es_given_violation": mean_es,
+        "mean_excess_over_var": mean_excess_var,
+        "mean_excess_over_es": mean_excess_es,
+    }
+
+
+def es_backtest_report_oos(loss: pd.Series, var_t: pd.Series, es_t: pd.Series, alpha: float) -> dict:
+    """
+    Out-of-sample (1-step shift) ES severity report:
+
+    - Compare realized loss_t vs VaR_{t-1}
+    - Use ES_{t-1} as the model ES available at time t
+    - Summarize tail severity conditional on VaR_{t-1} violations:
+        loss_t > VaR_{t-1}
+
+    This is more deployment-faithful (no look-ahead).
+    """
+    if not isinstance(loss, pd.Series) or not isinstance(var_t, pd.Series) or not isinstance(es_t, pd.Series):
+        raise TypeError("loss, var_t, es_t must be pandas Series")
+    if not (0.0 < alpha < 1.0):
+        raise ValueError("alpha must be in (0,1)")
+
+    var_prev = var_t.shift(1).rename("var_prev")
+    es_prev = es_t.shift(1).rename("es_prev")
+
+    aligned = pd.concat(
+        [loss.rename("loss"), var_prev, es_prev],
+        axis=1,
+    ).dropna()
+
+    n = int(len(aligned))
+    if n == 0:
+        raise ValueError("Aligned series is empty (check indices / NaNs).")
+
+    viol = (aligned["loss"] > aligned["var_prev"]).astype(int)
+    x = int(viol.sum())
+
+    expected_rate = 1.0 - alpha
+    observed_rate = float(x / n)
+
+    if x == 0:
+        return {
+            "n": n,
+            "x": x,
+            "expected_rate": expected_rate,
+            "observed_rate": observed_rate,
+            "mean_loss_given_violation": float("nan"),
+            "mean_es_given_violation": float("nan"),
+            "mean_excess_over_var": float("nan"),
+            "mean_excess_over_es": float("nan"),
+        }
+
+    tail = aligned.loc[viol == 1]
+    mean_loss = float(tail["loss"].mean())
+    mean_es = float(tail["es_prev"].mean())
+    mean_excess_var = float((tail["loss"] - tail["var_prev"]).mean())
+    mean_excess_es = float((tail["loss"] - tail["es_prev"]).mean())
+
+    return {
+        "n": n,
+        "x": x,
+        "expected_rate": expected_rate,
+        "observed_rate": observed_rate,
+        "mean_loss_given_violation": mean_loss,
+        "mean_es_given_violation": mean_es,
+        "mean_excess_over_var": mean_excess_var,
+        "mean_excess_over_es": mean_excess_es,
+    }
+
